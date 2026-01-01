@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Environment variables (SECRETS)
+.env
+.env.local
+*.env
+
+# Operating System junk
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
