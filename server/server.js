@@ -24,7 +24,8 @@ app.use(express.static(clientBuildPath));
 
 // 3. CATCH-ALL HANDLER
 // If the user requests a page like /calendar, send them index.html so React can handle it
-app.get('*', (req, res) => {
+// UPDATED: Use Regex (/.*/) to match all routes safely in Express v5
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
