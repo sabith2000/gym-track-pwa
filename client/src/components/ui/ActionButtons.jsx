@@ -1,20 +1,25 @@
 import React from 'react';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
-const ActionButtons = ({ onMark, loading, currentStatus }) => {
+// UPDATED: Added 'disabled' prop to block clicks during Edit Mode
+const ActionButtons = ({ onMark, loading, currentStatus, disabled }) => {
+  
+  // Helper to determine opacity/pointer-events
+  const containerClass = disabled 
+    ? "opacity-40 pointer-events-none grayscale" // Dimmed when disabled
+    : "opacity-100";
+
   return (
-    <div className="grid grid-cols-2 gap-4 mb-6">
+    <div className={`grid grid-cols-2 gap-4 mb-6 transition-all duration-300 ${containerClass}`}>
       
       {/* PRESENT BUTTON */}
       <button
         onClick={() => onMark('PRESENT')}
-        disabled={loading}
+        disabled={loading || disabled}
         className={`
           relative overflow-hidden flex flex-col items-center justify-center p-6 rounded-2xl transition-all duration-300
           ${currentStatus === 'PRESENT' 
-            // ACTIVE STATE: Solid Vibrant Green, White Text, Deep Shadow
             ? 'bg-emerald-500 text-white shadow-emerald-200 shadow-xl scale-[1.02] ring-0' 
-            // INACTIVE STATE: White BG, Green Border, Green Icon
             : 'bg-white text-gray-700 border-2 border-emerald-100 hover:border-emerald-300 shadow-sm hover:shadow-md'
           }
         `}
@@ -28,13 +33,11 @@ const ActionButtons = ({ onMark, loading, currentStatus }) => {
       {/* ABSENT BUTTON */}
       <button
         onClick={() => onMark('ABSENT')}
-        disabled={loading}
+        disabled={loading || disabled}
         className={`
           relative overflow-hidden flex flex-col items-center justify-center p-6 rounded-2xl transition-all duration-300
           ${currentStatus === 'ABSENT' 
-            // ACTIVE STATE: Solid Vibrant Red, White Text, Deep Shadow
             ? 'bg-rose-500 text-white shadow-rose-200 shadow-xl scale-[1.02] ring-0' 
-            // INACTIVE STATE: White BG, Red Border, Red Icon
             : 'bg-white text-gray-700 border-2 border-rose-100 hover:border-rose-300 shadow-sm hover:shadow-md'
           }
         `}
