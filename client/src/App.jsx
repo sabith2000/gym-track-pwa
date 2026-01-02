@@ -4,6 +4,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { useAttendance } from './hooks/useAttendance';
 import { formatDateString } from './utils/dateHelpers';
 
+// Components
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import StatCard from './components/ui/StatCard';
@@ -12,6 +13,7 @@ import ActionButtons from './components/ui/ActionButtons';
 import StatusBanner from './components/ui/StatusBanner';
 import EditStatusModal from './components/modals/EditStatusModal';
 
+// Icons
 import { FireIcon, CalendarDaysIcon, ChartBarIcon } from '@heroicons/react/24/solid';
 
 function App() {
@@ -22,7 +24,7 @@ function App() {
 
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // --- CONFIGURATION: Your Custom Message ---
+  // Config: Custom Message Banner
   const announcement = ""; 
 
   const todayStr = formatDateString(
@@ -106,27 +108,73 @@ function App() {
             />
           </div>
 
+          {/* --- NEW STATS SECTION --- */}
           <div className="grid grid-cols-1 gap-4 mb-8">
-            <StatCard 
-              title="Total Sessions" 
-              value={stats.total} 
-              icon={FireIcon} 
-              color="text-orange-500 bg-orange-500" 
-            />
-            <StatCard 
-              title="Attendance Rate" 
-              value={`${stats.percentage}%`} 
-              icon={ChartBarIcon} 
-              color="text-blue-500 bg-blue-500" 
-            />
+            
+            {/* 1. STREAK CARD */}
             <StatCard 
               title="Current Streak" 
-              value={`${stats.streak} Days`} 
               icon={CalendarDaysIcon} 
-              color="text-emerald-500 bg-emerald-500" 
-            />
-          </div>
+              color="text-emerald-500 bg-emerald-500"
+              badge={`Best: ${stats.bestStreak}`} // Shows "Best: 5" badge
+            >
+              <div className="flex flex-col">
+                <span className="text-3xl font-extrabold leading-none text-gray-900">
+                  {stats.streak} {stats.streak === 1 ? 'Day' : 'Days'}
+                </span>
+                <span className="text-xs font-bold text-emerald-600 mt-1 animate-pulse">
+                  {stats.streakMsg}
+                </span>
+              </div>
+            </StatCard>
 
+            {/* 2. ATTENDANCE RATE (Split View) */}
+            <StatCard 
+              title="Attendance Rate" 
+              icon={ChartBarIcon} 
+              color="text-blue-500 bg-blue-500"
+            >
+              <div className="flex items-center justify-between divide-x divide-gray-200">
+                <div className="pr-4">
+                  <span className="block text-2xl font-bold text-gray-900">{stats.month.percentage}%</span>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold">This Month</span>
+                </div>
+                <div className="pl-4">
+                  <span className="block text-2xl font-bold text-gray-400">{stats.total.percentage}%</span>
+                  <span className="text-[10px] text-gray-400 uppercase font-bold">Lifetime</span>
+                </div>
+              </div>
+            </StatCard>
+
+            {/* 3. ACTIVITY LOG (Renamed, Split View) */}
+            <StatCard 
+              title="Activity Log" 
+              icon={FireIcon} 
+              color="text-orange-500 bg-orange-500"
+            >
+              <div className="space-y-2 mt-1">
+                {/* Monthly Row */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500 font-medium">Month:</span>
+                  <div className="space-x-2">
+                    <span className="font-bold text-emerald-600">{stats.month.present} P</span>
+                    <span className="text-gray-300">|</span>
+                    <span className="font-bold text-rose-500">{stats.month.absent} A</span>
+                  </div>
+                </div>
+                {/* Total Row */}
+                <div className="flex justify-between text-sm border-t border-gray-100 pt-1">
+                  <span className="text-gray-500 font-medium">Lifetime:</span>
+                  <div className="space-x-2">
+                    <span className="font-bold text-emerald-600">{stats.total.present} P</span>
+                    <span className="text-gray-300">|</span>
+                    <span className="font-bold text-rose-500">{stats.total.absent} A</span>
+                  </div>
+                </div>
+              </div>
+            </StatCard>
+
+          </div>
         </main>
 
         <Footer />

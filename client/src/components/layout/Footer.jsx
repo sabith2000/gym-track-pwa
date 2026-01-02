@@ -1,14 +1,13 @@
 import React from 'react';
+import pkg from '../../../package.json'; // Import package.json
 
 const Footer = () => {
   return (
-    <footer className="py-8 text-center">
-      <p className="text-xs text-gray-400">
-        GymTrack PWA <span className="font-mono bg-gray-100 px-1 rounded">v0.2.0</span>
-      </p>
-      <p className="text-[10px] text-gray-300 mt-1 uppercase tracking-widest">
-        Designed by Architect
-      </p>
+    <footer className="fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-200 z-40">
+      <div className="max-w-md mx-auto px-4 py-3 flex justify-between items-center text-xs text-gray-400">
+        <p>© 2026 GymTrack</p>
+        <p>v{pkg.version}</p>
+      </div>
     </footer>
   );
 };

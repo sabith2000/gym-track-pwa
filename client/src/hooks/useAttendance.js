@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { fetchHistory, submitAttendance } from '../services/api';
-import { formatDateString, calculateStreak } from '../utils/dateHelpers';
+import { 
+  formatDateString, 
+  calculateStreak, 
+  calculateBestStreak, 
+  calculateStats 
+} from '../utils/dateHelpers';
 import { 
   saveLocalHistory, 
   getLocalHistory, 
@@ -11,17 +16,47 @@ import {
 } from '../utils/syncManager';
 
 export const useAttendance = () => {
+  // --- STATE ---
   const [history, setHistory] = useState({});
   const [loading, setLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   
-  // --- EDIT MODE STATE ---
+  // Edit Mode State
   const [isEditing, setIsEditing] = useState(false);
   const [editTimer, setEditTimer] = useState(0); 
   const [touchedDates, setTouchedDates] = useState(new Set());
   const timerRef = useRef(null);
 
-  // 1. Start Edit Session
+  // ============================================================
+  // 1. STATS ENGINE (The "Brain" - Refactored)
+  // ============================================================
+  const stats = useMemo(() => {
+    // A. Calculate Basic Counts (Month vs Lifetime)
+    const { total, month } = calculateStats(history);
+    
+    // B. Calculate Streaks
+    const currentStreak = calculateStreak(history);
+    const bestStreak = calculateBestStreak(history);
+
+    // C. Generate Motivation Message
+    let streakMsg = "Start it up! ❄️";
+    if (currentStreak >= 3) streakMsg = "Heating up! 🔥";
+    if (currentStreak >= 7) streakMsg = "On Fire! 🚀";
+    if (currentStreak >= 14) streakMsg = "Unstoppable! 🏆";
+    if (currentStreak >= 30) streakMsg = "God Mode! ⚡";
+
+    return {
+      total,       // { present, absent, percentage }
+      month,       // { present, absent, percentage }
+      streak: currentStreak,
+      bestStreak: bestStreak,
+      streakMsg
+    };
+  }, [history]);
+
+  // ============================================================
+  // 2. EDIT SESSION LOGIC
+  // ============================================================
   const startEditSession = () => {
     setIsEditing(true);
     setEditTimer(60);
@@ -41,7 +76,6 @@ export const useAttendance = () => {
     }, 1000);
   };
 
-  // 2. End Edit Session
   const endEditSession = () => {
     setIsEditing(false);
     setEditTimer(0);
@@ -50,7 +84,9 @@ export const useAttendance = () => {
     toast('Edit Mode Locked', { icon: '🔒' });
   };
 
-  // 3. Mark Function
+  // ============================================================
+  // 3. CORE ACTIONS (Mark & Sync)
+  // ============================================================
   const markAttendance = async (status, targetDate = null) => {
     setLoading(true);
     
@@ -62,14 +98,17 @@ export const useAttendance = () => {
     
     const dateToMark = targetDate || todayStr;
 
+    // Track edited dates to prevent double-edits in one session
     if (targetDate && isEditing) {
       setTouchedDates(prev => new Set(prev).add(dateToMark));
     }
 
+    // 1. Optimistic UI Update
     const newHistory = { ...history, [dateToMark]: status };
     setHistory(newHistory);
     await saveLocalHistory(newHistory);
 
+    // 2. Network Request
     try {
       await submitAttendance(dateToMark, status);
       if (!targetDate) toast.success(`Marked as ${status}!`);
@@ -82,7 +121,6 @@ export const useAttendance = () => {
     }
   };
 
-  // --- SYNC ENGINE ---
   const processSyncQueue = useCallback(async () => {
     const queue = await getSyncQueue();
     if (queue.length === 0) return;
@@ -125,6 +163,7 @@ export const useAttendance = () => {
     }
   }, [processSyncQueue]);
 
+  // Network Listeners
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
@@ -142,25 +181,9 @@ export const useAttendance = () => {
     };
   }, [loadHistory, processSyncQueue]);
 
-  // --- STATS LOGIC (UPDATED WITH STREAK) ---
-  const stats = useMemo(() => {
-    const values = Object.values(history);
-    const totalPresent = values.filter(v => v === 'PRESENT').length;
-    const totalEntries = values.length;
-    
-    // Calculate Streak
-    const currentStreak = calculateStreak(history);
-
-    return {
-      total: totalPresent,
-      percentage: totalEntries > 0 ? Math.round((totalPresent / totalEntries) * 100) : 0,
-      streak: currentStreak
-    };
-  }, [history]);
-
   return { 
     history, 
-    stats, 
+    stats, // Now contains total, month, streak, bestStreak, streakMsg
     loading, 
     markAttendance, 
     refresh: loadHistory,
