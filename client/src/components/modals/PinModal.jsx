@@ -17,7 +17,8 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
   }, [isOpen]);
 
   const handleChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return; // Only numbers
+    // UPDATED REGEX: Only allow numbers
+    if (!/^\d*$/.test(value)) return; 
 
     const newPin = [...pin];
     newPin[index] = value;
@@ -73,6 +74,10 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
               key={idx}
               ref={(el) => (inputRefs.current[idx] = el)}
               type="password"
+              /* --- KEY FIX FOR MOBILE KEYBOARD --- */
+              inputMode="numeric" 
+              pattern="[0-9]*"
+              /* ----------------------------------- */
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(idx, e.target.value)}
