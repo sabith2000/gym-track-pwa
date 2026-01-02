@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { generateCalendarGrid, formatDateString } from '../../utils/dateHelpers';
 
-// UPDATED: Now accepts 'data' prop (Real history from database)
 const CalendarGrid = ({ data }) => {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth(); 
-  const currentDay = today.getDate();
+  const [viewDate, setViewDate] = useState(new Date());
+
+  const currentYear = viewDate.getFullYear();
+  const currentMonth = viewDate.getMonth();
+  const days = generateCalendarGrid(currentYear, currentMonth);
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Navigation
+  const prevMonth = () => setViewDate(new Date(currentYear, currentMonth - 1, 1));
+  const nextMonth = () => setViewDate(new Date(currentYear, currentMonth + 1, 1));
+
+  // Helper: Is this specific grid number "Today"?
+  const isTodayCheck = (day) => {
+    const today = new Date();
+    return (
+      day === today.getDate() &&
+      currentMonth === today.getMonth() &&
+      currentYear === today.getFullYear()
+    );
+  };
 
   const isPastDate = (day) => {
     const checkDate = new Date(currentYear, currentMonth, day);
@@ -16,21 +32,26 @@ const CalendarGrid = ({ data }) => {
     return checkDate < now;
   };
 
-  const days = generateCalendarGrid(currentYear, currentMonth);
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+    <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-100">
       
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-extrabold text-gray-800">
-          {today.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        <button onClick={prevMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-400">
+          <ChevronLeftIcon className="w-5 h-5" />
+        </button>
+        <h3 className="text-xl font-extrabold text-gray-900 select-none">
+          {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </h3>
+        <button onClick={nextMonth} className="p-1 hover:bg-gray-100 rounded-full text-gray-400">
+          <ChevronRightIcon className="w-5 h-5" />
+        </button>
       </div>
 
+      {/* Grid */}
       <div className="grid grid-cols-7 gap-3 mb-2">
         {weekDays.map((day) => (
-          <div key={day} className="text-center text-xs font-bold text-gray-500 mb-2">
+          <div key={day} className="text-center text-xs font-bold text-gray-400 mb-2">
             {day}
           </div>
         ))}
@@ -39,42 +60,39 @@ const CalendarGrid = ({ data }) => {
           if (!day) return <div key={`empty-${index}`} />; 
 
           const dateStr = formatDateString(currentYear, currentMonth, day);
-          
-          // UPDATED: Use the real data passed from App.jsx
           const status = data ? data[dateStr] : null; 
-          
-          const isToday = day === currentDay;
+          const isToday = isTodayCheck(day);
           const isPast = isPastDate(day);
 
-          // --- VISUAL LOGIC ---
-          let baseClasses = "aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-200 shadow-sm";
-          let colorClasses = "";
-
+          // 1. Base Shape
+          let finalClasses = "aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-200 shadow-sm ";
+          
+          // 2. Status Colors
           if (status === 'PRESENT') {
-            colorClasses = "bg-emerald-500 text-white shadow-emerald-200 shadow-md transform hover:scale-105";
+            finalClasses += "bg-emerald-500 text-white shadow-emerald-200 ";
           } else if (status === 'ABSENT') {
-            colorClasses = "bg-rose-500 text-white shadow-rose-200 shadow-md opacity-90";
+            finalClasses += "bg-rose-500 text-white shadow-rose-200 ";
           } else {
-             if (isToday) {
-               colorClasses = "bg-white text-blue-600";
-             } else if (isPast) {
-               colorClasses = "bg-gray-200 text-gray-400 border border-gray-300";
+            // Empty State
+             if (isPast) {
+               finalClasses += "bg-gray-100 text-gray-400 ";
              } else {
-               colorClasses = "bg-gray-50 text-gray-300";
+               finalClasses += "bg-gray-50 text-gray-300 ";
              }
           }
 
-          const borderClasses = isToday 
-            ? "ring-2 ring-blue-600 ring-offset-2 z-10" 
-            : "border-transparent";
+          // 3. Today Highlight (The Fix: Applied ON TOP of colors)
+          if (isToday) {
+             // Ring-offset creates the small white gap between box and ring
+             finalClasses += "ring-2 ring-blue-600 ring-offset-2 z-10 font-extrabold ";
+             // If today is empty (not marked yet), ensure text is blue
+             if (!status) finalClasses += "text-blue-600 bg-white ";
+          }
 
           return (
-            <button
-              key={day}
-              className={`${baseClasses} ${colorClasses} ${borderClasses}`}
-            >
+            <div key={day} className={finalClasses}>
               {day}
-            </button>
+            </div>
           );
         })}
       </div>

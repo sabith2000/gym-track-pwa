@@ -1,21 +1,19 @@
 import React from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
 import { useAttendance } from './hooks/useAttendance';
 import { formatDateString } from './utils/dateHelpers';
 
-// Components
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import StatCard from './components/ui/StatCard';
 import CalendarGrid from './components/ui/CalendarGrid';
 import ActionButtons from './components/ui/ActionButtons';
 
-// Icons
 import { FireIcon, CalendarDaysIcon, ChartBarIcon } from '@heroicons/react/24/solid';
 
 function App() {
-  const { history, stats, loading, markToday } = useAttendance();
+  const { history, stats, loading, markToday, refresh } = useAttendance();
 
   const todayStr = formatDateString(
     new Date().getFullYear(),
@@ -24,28 +22,42 @@ function App() {
   );
   const todayStatus = history[todayStr];
 
+  // Manual Refresh Handler
+  const handleManualRefresh = async () => {
+    await toast.promise(
+      refresh(), 
+      {
+        loading: 'Syncing...',
+        success: 'Up to date!',
+        error: 'Sync failed.',
+      }
+    );
+  };
+
   return (
     <ThemeProvider>
       <Toaster position="bottom-center" toastOptions={{ duration: 3000 }} />
 
-      <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-        <Header />
+      {/* UPDATED BACKGROUND: bg-slate-100 (Cool Professional Gray) */}
+      <div className="min-h-screen bg-slate-100 text-gray-900 font-sans">
+        
+        <Header 
+          onRefresh={handleManualRefresh} 
+          loading={loading} 
+        />
 
         <main className="max-w-md mx-auto px-4 pt-6 pb-20">
           
-          {/* 1. Action Buttons (Top Priority) */}
           <ActionButtons 
             onMark={markToday} 
             loading={loading} 
             currentStatus={todayStatus} 
           />
 
-          {/* 2. Calendar (Moved Up) */}
           <div className="mb-4">
             <CalendarGrid data={history} />
           </div>
 
-          {/* 3. Stats Grid (Moved Down) */}
           <div className="grid grid-cols-1 gap-4 mb-8">
             <StatCard 
               title="Total Sessions" 

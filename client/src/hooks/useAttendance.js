@@ -48,7 +48,7 @@ export const useAttendance = () => {
     });
     
     setHistory(map);
-    await saveLocalHistory(map); // <--- Save to Device immediately
+    await saveLocalHistory(map);
   };
 
   // --- 2. LOAD LOGIC (Offline First) ---
@@ -63,7 +63,6 @@ export const useAttendance = () => {
     try {
       const data = await fetchHistory();
       processServerData(data);
-      // If we are online, also check if we have queued items
       processSyncQueue();
     } catch (error) {
       console.log('Network failed, using local data.');
@@ -100,7 +99,7 @@ export const useAttendance = () => {
     }
   };
 
-  // Network Listener (Auto-sync when internet comes back)
+  // Network Listener
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
@@ -113,7 +112,6 @@ export const useAttendance = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initial Load
     loadHistory();
 
     return () => {
@@ -133,5 +131,13 @@ export const useAttendance = () => {
     };
   }, [history]);
 
-  return { history, stats, loading, markToday, isOffline };
+  // --- RETURN OBJECT (FIXED: Added refresh) ---
+  return { 
+    history, 
+    stats, 
+    loading, 
+    markToday, 
+    isOffline,
+    refresh: loadHistory // <--- This was missing!
+  };
 };
