@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { fetchHistory, submitAttendance } from '../services/api';
-import { formatDateString } from '../utils/dateHelpers';
+import { formatDateString, calculateStreak } from '../utils/dateHelpers';
 import { 
   saveLocalHistory, 
   getLocalHistory, 
@@ -17,25 +17,23 @@ export const useAttendance = () => {
   
   // --- EDIT MODE STATE ---
   const [isEditing, setIsEditing] = useState(false);
-  const [editTimer, setEditTimer] = useState(0); // Seconds remaining
-  const [touchedDates, setTouchedDates] = useState(new Set()); // Tracks dates edited in THIS session
+  const [editTimer, setEditTimer] = useState(0); 
+  const [touchedDates, setTouchedDates] = useState(new Set());
   const timerRef = useRef(null);
 
   // 1. Start Edit Session
   const startEditSession = () => {
     setIsEditing(true);
     setEditTimer(60);
-    setTouchedDates(new Set()); // Reset restriction list
+    setTouchedDates(new Set()); 
     toast.success('Edit Mode Unlocked');
 
-    // Clear any existing timer
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // Start Countdown
     timerRef.current = setInterval(() => {
       setEditTimer((prev) => {
         if (prev <= 1) {
-          endEditSession(); // Auto-lock at 0
+          endEditSession(); 
           return 0;
         }
         return prev - 1;
@@ -43,7 +41,7 @@ export const useAttendance = () => {
     }, 1000);
   };
 
-  // 2. End Edit Session (Manual or Auto)
+  // 2. End Edit Session
   const endEditSession = () => {
     setIsEditing(false);
     setEditTimer(0);
@@ -52,7 +50,7 @@ export const useAttendance = () => {
     toast('Edit Mode Locked', { icon: '🔒' });
   };
 
-  // 3. Mark Function (Updated with Restriction Logic)
+  // 3. Mark Function
   const markAttendance = async (status, targetDate = null) => {
     setLoading(true);
     
@@ -64,19 +62,16 @@ export const useAttendance = () => {
     
     const dateToMark = targetDate || todayStr;
 
-    // RULE: If in Edit Mode, add to "Touched List" to prevent re-editing
     if (targetDate && isEditing) {
       setTouchedDates(prev => new Set(prev).add(dateToMark));
     }
 
-    // Standard Save Logic...
     const newHistory = { ...history, [dateToMark]: status };
     setHistory(newHistory);
     await saveLocalHistory(newHistory);
 
     try {
       await submitAttendance(dateToMark, status);
-      // Only show toast for today's action to avoid double toasts with Modals
       if (!targetDate) toast.success(`Marked as ${status}!`);
     } catch (error) {
       await addToSyncQueue({ date: dateToMark, status });
@@ -87,47 +82,79 @@ export const useAttendance = () => {
     }
   };
 
-  // --- SYNC ENGINE (Standard) ---
+  // --- SYNC ENGINE ---
   const processSyncQueue = useCallback(async () => {
     const queue = await getSyncQueue();
     if (queue.length === 0) return;
+
     try {
-      for (const job of queue) await submitAttendance(job.date, job.status);
+      toast.loading('Syncing offline data...', { id: 'sync' });
+      for (const job of queue) {
+        await submitAttendance(job.date, job.status);
+      }
       await clearSyncQueue();
+      toast.success('Sync Complete!', { id: 'sync' });
       const serverData = await fetchHistory();
       processServerData(serverData);
-    } catch (error) { console.error(error); }
+    } catch (error) {
+      toast.error('Sync failed. Will try later.', { id: 'sync' });
+    }
   }, []);
 
   const processServerData = async (dataArray) => {
     const map = {};
-    dataArray.forEach(record => map[record.date] = record.status);
+    dataArray.forEach(record => {
+      map[record.date] = record.status;
+    });
     setHistory(map);
     await saveLocalHistory(map);
   };
 
   const loadHistory = useCallback(async () => {
     const localData = await getLocalHistory();
-    if (localData) setHistory(localData);
+    if (localData && Object.keys(localData).length > 0) {
+      setHistory(localData);
+    }
     try {
       const data = await fetchHistory();
       processServerData(data);
       processSyncQueue();
-    } catch (error) { setIsOffline(true); }
+    } catch (error) {
+      console.log('Network failed, using local data.');
+      setIsOffline(true);
+    }
   }, [processSyncQueue]);
 
   useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success('Back Online!');
+      processSyncQueue();
+      loadHistory();
+    };
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
     loadHistory();
-  }, [loadHistory]);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [loadHistory, processSyncQueue]);
 
-  // Stats
+  // --- STATS LOGIC (UPDATED WITH STREAK) ---
   const stats = useMemo(() => {
     const values = Object.values(history);
     const totalPresent = values.filter(v => v === 'PRESENT').length;
     const totalEntries = values.length;
+    
+    // Calculate Streak
+    const currentStreak = calculateStreak(history);
+
     return {
       total: totalPresent,
-      percentage: totalEntries > 0 ? Math.round((totalPresent / totalEntries) * 100) : 0
+      percentage: totalEntries > 0 ? Math.round((totalPresent / totalEntries) * 100) : 0,
+      streak: currentStreak
     };
   }, [history]);
 
@@ -135,13 +162,12 @@ export const useAttendance = () => {
     history, 
     stats, 
     loading, 
-    markAttendance,
+    markAttendance, 
     refresh: loadHistory,
-    // Edit Exports
     isEditing,
     editTimer,
     startEditSession,
     endEditSession,
-    touchedDates // Exported to check validity
+    touchedDates
   };
 };

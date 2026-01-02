@@ -9,7 +9,7 @@ import Footer from './components/layout/Footer';
 import StatCard from './components/ui/StatCard';
 import CalendarGrid from './components/ui/CalendarGrid';
 import ActionButtons from './components/ui/ActionButtons';
-import StatusBanner from './components/ui/StatusBanner'; // NEW IMPORT
+import StatusBanner from './components/ui/StatusBanner';
 import EditStatusModal from './components/modals/EditStatusModal';
 
 import { FireIcon, CalendarDaysIcon, ChartBarIcon } from '@heroicons/react/24/solid';
@@ -23,8 +23,6 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
 
   // --- CONFIGURATION: Your Custom Message ---
-  // Leave empty ("") to hide the card.
-  // Write text here (e.g., "Gym Closed on Friday!") to show the blue card.
   const announcement = ""; 
 
   const todayStr = formatDateString(
@@ -83,12 +81,10 @@ function App() {
           isEditing={isEditing}
           onUnlock={startEditSession} 
           onLock={endEditSession}     
-          // Timer removed from here
         />
 
         <main className="max-w-md mx-auto px-4 pt-6 pb-20">
           
-          {/* NEW: The Status/Notification Area */}
           <StatusBanner 
             isEditing={isEditing} 
             timer={editTimer} 
@@ -111,9 +107,24 @@ function App() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 mb-8">
-            <StatCard title="Total Sessions" value={stats.total} icon={FireIcon} color="text-orange-500 bg-orange-500" />
-            <StatCard title="Attendance Rate" value={`${stats.percentage}%`} icon={ChartBarIcon} color="text-blue-500 bg-blue-500" />
-            <StatCard title="Current Streak" value="0 Days" icon={CalendarDaysIcon} color="text-emerald-500 bg-emerald-500" />
+            <StatCard 
+              title="Total Sessions" 
+              value={stats.total} 
+              icon={FireIcon} 
+              color="text-orange-500 bg-orange-500" 
+            />
+            <StatCard 
+              title="Attendance Rate" 
+              value={`${stats.percentage}%`} 
+              icon={ChartBarIcon} 
+              color="text-blue-500 bg-blue-500" 
+            />
+            <StatCard 
+              title="Current Streak" 
+              value={`${stats.streak} Days`} 
+              icon={CalendarDaysIcon} 
+              color="text-emerald-500 bg-emerald-500" 
+            />
           </div>
 
         </main>
