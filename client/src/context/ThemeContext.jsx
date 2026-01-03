@@ -1,21 +1,27 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  // Check local storage or default to 'light'
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
-  useEffect(() => {
-    // 1. Save to local storage
-    localStorage.setItem('theme', theme);
-    
-    // 2. Add/Remove the 'dark' class from the HTML tag (Tailwind logic)
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  // 1. Check Local Storage or System Preference
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gymtrack-theme');
+      if (saved) return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
+    return 'light';
+  });
+
+  // 2. Apply the class to the <html> tag
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('gymtrack-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

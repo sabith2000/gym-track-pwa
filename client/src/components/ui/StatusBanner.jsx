@@ -1,40 +1,50 @@
 import React from 'react';
-import { ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
+import { InformationCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 const StatusBanner = ({ isEditing, timer, customMessage }) => {
-  // PRIORITY 1: Edit Mode (Red Alert)
+  
+  // 1. EDIT MODE (Active Timer)
   if (isEditing) {
     return (
-      <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center animate-fade-in">
-        <div className="p-2 bg-red-100 rounded-full mr-3">
-          <ExclamationTriangleIcon className="w-5 h-5 text-red-600" />
+      <div className="mb-6 animate-fade-in">
+        {/* UPDATED: dark:bg-red-900/20, dark:border-red-900/50, dark:text-red-200 */}
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-full animate-pulse">
+              <ClockIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-red-800 dark:text-red-200">Edit Mode Unlocked</p>
+              <p className="text-xs text-red-600 dark:text-red-300/80 font-medium">
+                Tap days to modify history
+              </p>
+            </div>
+          </div>
+          <div className="text-xl font-mono font-bold text-red-600 dark:text-red-400 w-12 text-center">
+            {timer}s
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-bold text-red-800">Edit Mode Active</p>
-          <p className="text-xs text-red-600 font-medium">
-            Session closes in {timer} seconds
+      </div>
+    );
+  }
+
+  // 2. CUSTOM ANNOUNCEMENT (Optional)
+  if (customMessage) {
+    return (
+      <div className="mb-6 animate-fade-in">
+        {/* UPDATED: dark:bg-slate-800, dark:border-slate-700 */}
+        <div className="bg-white dark:bg-slate-800 border border-blue-100 dark:border-slate-700 rounded-2xl p-4 flex items-start space-x-3 shadow-sm">
+          <InformationCircleIcon className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 shrink-0" />
+          {/* UPDATED: dark:text-slate-300 */}
+          <p className="text-sm text-gray-600 dark:text-slate-300 font-medium leading-relaxed">
+            {customMessage}
           </p>
         </div>
       </div>
     );
   }
 
-  // PRIORITY 2: Custom Message (Blue Info) - Only shows if you type something
-  if (customMessage) {
-    return (
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center">
-        <div className="p-2 bg-blue-100 rounded-full mr-3">
-          <InformationCircleIcon className="w-5 h-5 text-blue-600" />
-        </div>
-        <p className="text-sm font-medium text-blue-800">
-          {customMessage}
-        </p>
-      </div>
-    );
-  }
-
-  // If nothing is active, return null (or an empty div with height if you want fixed spacing)
-  return null; 
+  return null;
 };
 
 export default StatusBanner;

@@ -6,18 +6,15 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
   const [error, setError] = useState(false);
   const inputRefs = useRef([]);
 
-  // Reset state when opening
   useEffect(() => {
     if (isOpen) {
       setPin(['', '', '', '']);
       setError(false);
-      // Focus first input
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     }
   }, [isOpen]);
 
   const handleChange = (index, value) => {
-    // UPDATED REGEX: Only allow numbers
     if (!/^\d*$/.test(value)) return; 
 
     const newPin = [...pin];
@@ -25,12 +22,10 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
     setPin(newPin);
     setError(false);
 
-    // Auto-focus next input
     if (value && index < 3) {
       inputRefs.current[index + 1].focus();
     }
 
-    // Check PIN automatically when filled
     if (index === 3 && value) {
       const fullPin = newPin.join('');
       if (fullPin === '0000') {
@@ -45,7 +40,6 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const handleKeyDown = (index, e) => {
-    // Handle Backspace
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
@@ -55,16 +49,19 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 transform transition-all scale-100">
+      {/* UPDATED: dark:bg-slate-900 */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-xs p-6 transform transition-all scale-100 border border-gray-100 dark:border-slate-800">
         
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Admin Access</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          {/* UPDATED: dark:text-white */}
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Admin Access</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
-        <p className="text-sm text-gray-500 mb-6 text-center">
+        {/* UPDATED: dark:text-slate-400 */}
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-6 text-center">
           Enter PIN to edit past records.
         </p>
 
@@ -74,19 +71,19 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
               key={idx}
               ref={(el) => (inputRefs.current[idx] = el)}
               type="password"
-              /* --- KEY FIX FOR MOBILE KEYBOARD --- */
               inputMode="numeric" 
               pattern="[0-9]*"
-              /* ----------------------------------- */
               maxLength={1}
               value={digit}
               onChange={(e) => handleChange(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(idx, e)}
               className={`
                 w-12 h-14 text-center text-2xl font-bold rounded-xl border-2 outline-none transition-all
+                /* UPDATED: Dark Mode Styles for Inputs */
+                dark:bg-slate-800 dark:text-white
                 ${error 
-                  ? 'border-red-300 bg-red-50 text-red-600 animate-shake' 
-                  : 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50'}
+                  ? 'border-red-300 bg-red-50 text-red-600 animate-shake dark:bg-red-900/20 dark:border-red-800 dark:text-red-400' 
+                  : 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 dark:border-slate-700 dark:focus:border-blue-500 dark:focus:ring-blue-900/30'}
               `}
             />
           ))}

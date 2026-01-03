@@ -3,14 +3,13 @@ import { toast } from 'react-hot-toast';
 import { useAttendance } from '../hooks/useAttendance';
 import { formatDateString } from '../utils/dateHelpers';
 
-// Components
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import CalendarGrid from '../components/ui/CalendarGrid';
 import ActionButtons from '../components/ui/ActionButtons';
 import StatusBanner from '../components/ui/StatusBanner';
 import EditStatusModal from '../components/modals/EditStatusModal';
-import StatsGrid from '../components/dashboard/StatsGrid'; // Imported the new chunk!
+import StatsGrid from '../components/dashboard/StatsGrid';
 
 const Dashboard = () => {
   const { 
@@ -19,7 +18,7 @@ const Dashboard = () => {
   } = useAttendance();
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const announcement = ""; 
+  const announcement = "LMS"; // UPDATED: Custom Message
 
   const todayStr = formatDateString(
     new Date().getFullYear(),
@@ -66,7 +65,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 text-gray-900 font-sans">
+    // UPDATED: Added dark:bg-slate-950 and dark:text-white
+    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-gray-900 dark:text-white font-sans transition-colors duration-300">
       
       <Header 
         onRefresh={handleManualRefresh} 
@@ -99,7 +99,6 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* The Clean New Component */}
         <StatsGrid stats={stats} />
 
       </main>
