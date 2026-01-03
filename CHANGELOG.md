@@ -2,6 +2,20 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v1.2.0] - 2026-01-04
+### Added
+- **Dark Mode:** Full dark theme support with a system-aware toggle in Settings.
+- **Settings Menu:** New slide-up drawer for app preferences (Dark Mode, Version Info).
+- **Refactor:** Split `App.jsx` into `Dashboard` (Logic) and `StatsGrid` (UI) for better performance and maintainability.
+- **Visuals:** Updated Stat Cards to support dark mode with high-contrast text (`#C7CBD1`) and subtle borders.
+- **Components:** Updated Status Banner, Edit Modal, and Pin Modal to be fully responsive to dark theme.
+- **Config:** Updated Tailwind config to support `darkMode: 'class'` and custom animations.
+
+### Changed
+- **Footer:** Updated Creator signature to Fluorescent Yellow (`#ccff00`) and refined version pill styling.
+- **Text:** Standardized text colors across the app for better readability on both light and dark backgrounds.
+
+
 ## [v1.1.0] - 2026-01-02
 ### Added
 - **Streak Analytics:** Added "Current Streak" and "Best Streak" calculation logic.
