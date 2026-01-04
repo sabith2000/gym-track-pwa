@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { fetchHistory, submitAttendance } from '../services/api';
 import { useEditSession } from './useEditSession';
-import { ATTENDANCE_STATUS } from '../utils/constants'; // <--- Ensure constants are used
+import { ATTENDANCE_STATUS } from '../utils/constants'; 
 import { 
   formatDateString, 
   calculateStreak, 
@@ -81,31 +81,36 @@ export const useAttendance = () => {
   // --- UPDATED SYNC ENGINE (Silent Mode Support) ---
   const processSyncQueue = useCallback(async (isBackground = false) => {
     const queue = await getSyncQueue();
-    if (queue.length === 0) return;
-
-    try {
-      // Only show toast if user triggered it manually
-      if (!isBackground) toast.loading('Syncing offline data...', { id: 'sync' });
-      
-      console.log(`📡 [Sync] Attempting to flush ${queue.length} items...`);
-      
-      for (const job of queue) {
-        await submitAttendance(job.date, job.status);
+    
+    // Logic: Even if queue is empty, we might want to fetch new data from server (Smart Polling)
+    // But we only upload if queue > 0
+    if (queue.length > 0) {
+      try {
+        if (!isBackground) toast.loading('Syncing offline data...', { id: 'sync' });
+        console.log(`📡 [Sync] Attempting to flush ${queue.length} items...`);
+        
+        for (const job of queue) {
+          await submitAttendance(job.date, job.status);
+        }
+        
+        await clearSyncQueue();
+        if (!isBackground) toast.success('Sync Complete!', { id: 'sync' });
+      } catch (error) {
+        console.error("❌ [Sync] Failed. Server might be cold.", error);
+        if (!isBackground) toast.error('Sync failed. Will retry automatically.', { id: 'sync' });
+        return; // Stop here if upload failed
       }
-      
-      await clearSyncQueue();
-      
-      if (!isBackground) toast.success('Sync Complete!', { id: 'sync' });
-      
-      // Refresh data from server to be sure
+    }
+
+    // ALWAYS fetch latest data after sync attempt (or if queue was empty)
+    // This enables "Smart Polling" to get updates from other devices
+    try {
       const serverData = await fetchHistory();
       processServerData(serverData);
-      
-    } catch (error) {
-      console.error("❌ [Sync] Failed. Server might be cold.", error);
-      // If background sync fails, we just stay quiet and try again in 2 mins
-      if (!isBackground) toast.error('Sync failed. Will retry automatically.', { id: 'sync' });
+    } catch (e) {
+      console.log('Silent fetch failed (offline or server cold)');
     }
+    
   }, []);
 
   const processServerData = async (dataArray) => {
@@ -137,32 +142,42 @@ export const useAttendance = () => {
     const handleOnline = () => {
       setIsOffline(false);
       toast.success('Back Online!');
-      processSyncQueue(false); // Visible sync on reconnect
+      processSyncQueue(false); // Visible sync
       loadHistory();
     };
     const handleOffline = () => setIsOffline(true);
 
+    // NEW: Focus Refresh (Instant Sync when tab is active)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        console.log('👁️ Tab Focused: Refreshing Data...');
+        processSyncQueue(true); // Silent sync
+      }
+    };
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     // Initial Load
     loadHistory();
 
-    // 💓 THE HEARTBEAT (Auto-Retry for Render.com)
+    // 💓 THE HEARTBEAT (Auto-Retry + Smart Polling)
     // Checks every 2 minutes (120000 ms)
     const heartbeatInterval = setInterval(async () => {
       if (navigator.onLine) {
-        const queue = await getSyncQueue();
-        if (queue.length > 0) {
-          processSyncQueue(true); // TRUE = Silent Background Sync
-        }
+        // Now calling processSyncQueue(true) which handles both
+        // 1. Uploading pending data
+        // 2. Downloading new data from server (Smart Polling)
+        processSyncQueue(true); 
       }
     }, 120000); 
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(heartbeatInterval); // Cleanup timer
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(heartbeatInterval);
     };
   }, [loadHistory, processSyncQueue]);
 
