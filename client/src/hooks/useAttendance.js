@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { fetchHistory, submitAttendance } from '../services/api';
-import { useEditSession } from './useEditSession'; // <--- Import New Hook
+import { useEditSession } from './useEditSession';
+import { ATTENDANCE_STATUS } from '../utils/constants'; // <--- Ensure constants are used
 import { 
   formatDateString, 
   calculateStreak, 
@@ -59,7 +60,6 @@ export const useAttendance = () => {
     
     const dateToMark = targetDate || todayStr;
 
-    // Delegate touch tracking to the sub-hook
     if (targetDate) registerTouch(dateToMark);
 
     const newHistory = { ...history, [dateToMark]: status };
@@ -78,21 +78,33 @@ export const useAttendance = () => {
     }
   };
 
-  const processSyncQueue = useCallback(async () => {
+  // --- UPDATED SYNC ENGINE (Silent Mode Support) ---
+  const processSyncQueue = useCallback(async (isBackground = false) => {
     const queue = await getSyncQueue();
     if (queue.length === 0) return;
 
     try {
-      toast.loading('Syncing offline data...', { id: 'sync' });
+      // Only show toast if user triggered it manually
+      if (!isBackground) toast.loading('Syncing offline data...', { id: 'sync' });
+      
+      console.log(`📡 [Sync] Attempting to flush ${queue.length} items...`);
+      
       for (const job of queue) {
         await submitAttendance(job.date, job.status);
       }
+      
       await clearSyncQueue();
-      toast.success('Sync Complete!', { id: 'sync' });
+      
+      if (!isBackground) toast.success('Sync Complete!', { id: 'sync' });
+      
+      // Refresh data from server to be sure
       const serverData = await fetchHistory();
       processServerData(serverData);
+      
     } catch (error) {
-      toast.error('Sync failed. Will try later.', { id: 'sync' });
+      console.error("❌ [Sync] Failed. Server might be cold.", error);
+      // If background sync fails, we just stay quiet and try again in 2 mins
+      if (!isBackground) toast.error('Sync failed. Will retry automatically.', { id: 'sync' });
     }
   }, []);
 
@@ -113,27 +125,44 @@ export const useAttendance = () => {
     try {
       const data = await fetchHistory();
       processServerData(data);
-      processSyncQueue();
+      processSyncQueue(false); // Initial load = visible sync
     } catch (error) {
       console.log('Network failed, using local data.');
       setIsOffline(true);
     }
   }, [processSyncQueue]);
 
+  // --- 5. LIFECYCLE & HEARTBEAT ---
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
       toast.success('Back Online!');
-      processSyncQueue();
+      processSyncQueue(false); // Visible sync on reconnect
       loadHistory();
     };
     const handleOffline = () => setIsOffline(true);
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    
+    // Initial Load
     loadHistory();
+
+    // 💓 THE HEARTBEAT (Auto-Retry for Render.com)
+    // Checks every 2 minutes (120000 ms)
+    const heartbeatInterval = setInterval(async () => {
+      if (navigator.onLine) {
+        const queue = await getSyncQueue();
+        if (queue.length > 0) {
+          processSyncQueue(true); // TRUE = Silent Background Sync
+        }
+      }
+    }, 120000); 
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearInterval(heartbeatInterval); // Cleanup timer
     };
   }, [loadHistory, processSyncQueue]);
 
@@ -144,7 +173,6 @@ export const useAttendance = () => {
     isOffline, 
     markAttendance, 
     refresh: loadHistory,
-    // Pass through the edit values
     isEditing,
     editTimer,
     startEditSession,
