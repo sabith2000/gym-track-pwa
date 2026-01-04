@@ -1,4 +1,3 @@
-// server/models/Attendance.js
 const mongoose = require('mongoose');
 
 const attendanceSchema = mongoose.Schema(
@@ -7,7 +6,14 @@ const attendanceSchema = mongoose.Schema(
     date: {
       type: String,
       required: true,
-      unique: true, // Prevents two entries for the same day
+      unique: true,
+      // NEW: Iron Gate Validation 🛡️
+      validate: {
+        validator: function(v) {
+          return /^\d{4}-\d{2}-\d{2}$/.test(v); // Enforce YYYY-MM-DD
+        },
+        message: props => `${props.value} is not a valid date format! Use YYYY-MM-DD.`
+      }
     },
     
     // The current active status
@@ -17,17 +23,17 @@ const attendanceSchema = mongoose.Schema(
       required: true,
     },
 
-    // The Audit Trail (Your "Correction Strategy")
+    // The Audit Trail
     history: [
       {
-        action: { type: String, required: true }, // e.g., "marked_present", "correction_to_absent"
-        timestamp: { type: Date, default: Date.now }, // Exact time of click
-        device: { type: String, default: 'web' } // Helpful if you add mobile later
+        action: { type: String, required: true }, 
+        timestamp: { type: Date, default: Date.now }, 
+        device: { type: String, default: 'web' } 
       }
     ]
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt
+    timestamps: true, 
   }
 );
 

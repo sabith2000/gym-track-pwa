@@ -11,6 +11,7 @@ import StatusBanner from '../components/ui/StatusBanner';
 import EditStatusModal from '../components/modals/EditStatusModal';
 import StatsGrid from '../components/dashboard/StatsGrid';
 import TodayStatusCard from '../components/dashboard/TodayStatusCard'; 
+import SkeletonCard from '../components/ui/SkeletonCard'; // <--- NEW IMPORT
 
 const Dashboard = () => {
   const { 
@@ -30,6 +31,10 @@ const Dashboard = () => {
   const todayStatus = history[todayStr];
 
   const showActionButtons = !todayStatus || isRetrying;
+
+  // Logic: Show skeletons ONLY on initial load (empty data + loading)
+  // This prevents flickering during background syncs
+  const showSkeleton = loading && Object.keys(history).length === 0;
 
   useEffect(() => {
     if (todayStatus) {
@@ -51,22 +56,16 @@ const Dashboard = () => {
     today.setHours(0,0,0,0);
     clickedDate.setHours(0,0,0,0);
 
-    // 1. Future Check
     if (clickedDate > today) {
       toast('Cannot mark future dates!', { icon: '🔮' });
       return;
     }
     
-    // 2. Today Check
     if (clickedDate.getTime() === today.getTime()) {
-      
-      // --- NEW: Block Today interaction if in Past Edit Mode ---
       if (isEditing) {
         toast('Exit Edit Mode to update Today.', { icon: '🔒' });
-        return; // Stop here. Do not scroll up.
+        return; 
       }
-      // --------------------------------------------------------
-
       if (todayStatus) {
         if (!isRetrying) {
           setIsRetrying(true);
@@ -80,7 +79,6 @@ const Dashboard = () => {
       return;
     }
 
-    // 3. Past Date Logic
     if (touchedDates.has(dateStr)) {
       toast.error('Session Locked: Date already modified.');
       return;
@@ -145,7 +143,16 @@ const Dashboard = () => {
           />
         </div>
 
-        <StatsGrid stats={stats} />
+        {/* --- SKELETON LOADING STATE --- */}
+        {showSkeleton ? (
+           <div className="grid grid-cols-1 gap-4 mb-8 animate-[fade-in_0.2s_ease-out]">
+             <SkeletonCard />
+             <SkeletonCard />
+             <SkeletonCard />
+           </div>
+        ) : (
+           <StatsGrid stats={stats} />
+        )}
 
       </main>
 
