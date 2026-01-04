@@ -2,12 +2,13 @@ import React from 'react';
 
 const StatCard = ({ title, icon: Icon, color, children, badge }) => {
   return (
-    // UPDATED: Background, Border, Hover effects for Dark Mode
-    <div className="relative bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-gray-100 dark:border-slate-800 flex items-start space-x-4 transition-transform hover:scale-[1.01]">
+    // UPDATED: Added 'items-center' to vertically align icon with larger text content
+    <div className="relative bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-gray-100 dark:border-slate-800 flex items-center space-x-5 transition-transform hover:scale-[1.01]">
       
-      {/* Icon */}
-      <div className={`p-3.5 rounded-xl ${color} bg-opacity-10 dark:bg-opacity-20 shrink-0`}>
-        <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+      {/* Icon - UPDATED: Larger container (p-4) */}
+      <div className={`p-4 rounded-xl ${color} bg-opacity-10 dark:bg-opacity-20 shrink-0`}>
+        {/* Icon - UPDATED: Larger size (w-8 h-8) */}
+        <Icon className={`w-8 h-8 ${color.replace('bg-', 'text-')}`} />
       </div>
       
       {/* Content Container */}

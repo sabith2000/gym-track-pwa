@@ -14,7 +14,6 @@ const StatsGrid = ({ stats }) => {
         badge={`Best: ${stats.bestStreak}`}
       >
         <div className="flex flex-col">
-          {/* UPDATED: dark:text-[#C7CBD1] */}
           <span className="text-3xl font-extrabold leading-none text-gray-900 dark:text-[#C7CBD1]">
             {stats.streak} {stats.streak === 1 ? 'Day' : 'Days'}
           </span>
@@ -24,51 +23,77 @@ const StatsGrid = ({ stats }) => {
         </div>
       </StatCard>
 
-      {/* 2. ATTENDANCE RATE */}
+      {/* 2. CONSISTENCY SCORE */}
       <StatCard 
-        title="Attendance Rate" 
+        title="Consistency Score" 
         icon={ChartBarIcon} 
         color="text-blue-500 bg-blue-500"
       >
         <div className="flex items-center justify-between divide-x divide-gray-200 dark:divide-slate-700">
-          <div className="pr-4">
-            {/* UPDATED: dark:text-[#C7CBD1] */}
-            <span className="block text-2xl font-bold text-gray-900 dark:text-[#C7CBD1]">{stats.month.percentage}%</span>
-            <span className="text-[10px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 uppercase font-bold">This Month</span>
+          <div className="pr-4 flex-1">
+            <span className="block text-3xl font-extrabold text-gray-900 dark:text-[#C7CBD1]">
+              {stats.month.percentage}%
+            </span>
+            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 font-bold uppercase tracking-wide">
+              This Month
+            </span>
           </div>
-          <div className="pl-4">
-            {/* UPDATED: dark:text-[#C7CBD1] opacity-70 for contrast */}
-            <span className="block text-2xl font-bold text-gray-400 dark:text-[#C7CBD1] dark:opacity-70">{stats.total.percentage}%</span>
-            <span className="text-[10px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 uppercase font-bold">Lifetime</span>
+          <div className="pl-4 flex-1">
+            <span className="block text-3xl font-bold text-gray-400 dark:text-[#C7CBD1] dark:opacity-50">
+              {stats.total.percentage}%
+            </span>
+            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-40 font-bold uppercase tracking-wide">
+              All Time
+            </span>
           </div>
         </div>
       </StatCard>
 
-      {/* 3. ACTIVITY LOG */}
+      {/* 3. MONTHLY BREAKDOWN (Colors Updated) */}
       <StatCard 
-        title="Activity Log" 
+        title="Monthly Breakdown" 
         icon={FireIcon} 
         color="text-orange-500 bg-orange-500"
       >
-        <div className="space-y-2 mt-1">
-          <div className="flex justify-between text-sm">
-            {/* UPDATED: dark:text-[#C7CBD1] */}
-            <span className="text-gray-500 dark:text-[#C7CBD1] dark:opacity-80 font-medium">Month:</span>
-            <div className="space-x-2">
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">{stats.month.present} P</span>
-              <span className="text-gray-300 dark:text-[#C7CBD1] dark:opacity-30">|</span>
-              <span className="font-bold text-rose-500 dark:text-rose-400">{stats.month.absent} A</span>
+        <div className="mt-2 space-y-3">
+          
+          {/* Workouts Row - EMERALD GREEN */}
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-600 dark:text-[#C7CBD1] dark:opacity-90">
+              ✅ Workouts
+            </span>
+            <div className="flex items-baseline space-x-1">
+              {/* Distinct Color for Number */}
+              <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                {stats.month.present}
+              </span>
+              {/* Matching Tint for Label */}
+              <span className="text-xs font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase">
+                days
+              </span>
             </div>
           </div>
-          <div className="flex justify-between text-sm border-t border-gray-100 dark:border-slate-800 pt-1">
-            {/* UPDATED: dark:text-[#C7CBD1] */}
-            <span className="text-gray-500 dark:text-[#C7CBD1] dark:opacity-80 font-medium">Lifetime:</span>
-            <div className="space-x-2">
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">{stats.total.present} P</span>
-              <span className="text-gray-300 dark:text-[#C7CBD1] dark:opacity-30">|</span>
-              <span className="font-bold text-rose-500 dark:text-rose-400">{stats.total.absent} A</span>
+
+          {/* Divider */}
+          <div className="border-t border-gray-100 dark:border-slate-800" />
+
+          {/* Rest Days Row - ROSE RED */}
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-600 dark:text-[#C7CBD1] dark:opacity-90">
+              💤 Rest Days
+            </span>
+            <div className="flex items-baseline space-x-1">
+              {/* Distinct Color for Number */}
+              <span className="text-3xl font-bold text-rose-600 dark:text-rose-400">
+                {stats.month.absent}
+              </span>
+              {/* Matching Tint for Label */}
+              <span className="text-xs font-bold text-rose-600/70 dark:text-rose-400/70 uppercase">
+                days
+              </span>
             </div>
           </div>
+
         </div>
       </StatCard>
     </div>
