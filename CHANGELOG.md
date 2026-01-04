@@ -2,6 +2,11 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v1.3.1] - 2026-01-04
+### Refactor
+- **Hooks:** Extracted edit session logic (timer, locking) from `useAttendance` into a new `useEditSession` hook.
+- **Maintenance:** Reduced `useAttendance.js` complexity by ~50 lines to improve readability and maintainability.
+
 ## [v1.2.0] - 2026-01-04
 ### Added
 - **Dark Mode:** Full dark theme support with a system-aware toggle in Settings.

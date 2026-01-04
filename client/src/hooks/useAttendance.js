@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { fetchHistory, submitAttendance } from '../services/api';
+import { useEditSession } from './useEditSession'; // <--- Import New Hook
 import { 
   formatDateString, 
   calculateStreak, 
@@ -16,20 +17,22 @@ import {
 } from '../utils/syncManager';
 
 export const useAttendance = () => {
-  // --- STATE ---
+  // --- 1. CORE DATA STATE ---
   const [history, setHistory] = useState({});
   const [loading, setLoading] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine); // <--- We track this already
-  
-  // Edit Mode State
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTimer, setEditTimer] = useState(0); 
-  const [touchedDates, setTouchedDates] = useState(new Set());
-  const timerRef = useRef(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  // ============================================================
-  // 1. STATS ENGINE
-  // ============================================================
+  // --- 2. IMPORT EDIT LOGIC ---
+  const { 
+    isEditing, 
+    editTimer, 
+    touchedDates, 
+    startEditSession, 
+    endEditSession, 
+    registerTouch 
+  } = useEditSession();
+
+  // --- 3. STATS ENGINE ---
   const stats = useMemo(() => {
     const { total, month } = calculateStats(history);
     const currentStreak = calculateStreak(history);
@@ -41,44 +44,10 @@ export const useAttendance = () => {
     if (currentStreak >= 14) streakMsg = "Unstoppable! 🏆";
     if (currentStreak >= 30) streakMsg = "God Mode! ⚡";
 
-    return {
-      total, month, streak: currentStreak, bestStreak, streakMsg
-    };
+    return { total, month, streak: currentStreak, bestStreak, streakMsg };
   }, [history]);
 
-  // ============================================================
-  // 2. EDIT SESSION LOGIC
-  // ============================================================
-  const startEditSession = () => {
-    setIsEditing(true);
-    setEditTimer(60);
-    setTouchedDates(new Set()); 
-    toast.success('Edit Mode Unlocked');
-
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    timerRef.current = setInterval(() => {
-      setEditTimer((prev) => {
-        if (prev <= 1) {
-          endEditSession(); 
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const endEditSession = () => {
-    setIsEditing(false);
-    setEditTimer(0);
-    setTouchedDates(new Set());
-    if (timerRef.current) clearInterval(timerRef.current);
-    toast('Edit Mode Locked', { icon: '🔒' });
-  };
-
-  // ============================================================
-  // 3. CORE ACTIONS (Mark & Sync)
-  // ============================================================
+  // --- 4. DATA OPERATIONS ---
   const markAttendance = async (status, targetDate = null) => {
     setLoading(true);
     
@@ -90,9 +59,8 @@ export const useAttendance = () => {
     
     const dateToMark = targetDate || todayStr;
 
-    if (targetDate && isEditing) {
-      setTouchedDates(prev => new Set(prev).add(dateToMark));
-    }
+    // Delegate touch tracking to the sub-hook
+    if (targetDate) registerTouch(dateToMark);
 
     const newHistory = { ...history, [dateToMark]: status };
     setHistory(newHistory);
@@ -173,9 +141,10 @@ export const useAttendance = () => {
     history, 
     stats, 
     loading, 
-    isOffline, // <--- EXPORTED NOW
+    isOffline, 
     markAttendance, 
     refresh: loadHistory,
+    // Pass through the edit values
     isEditing,
     editTimer,
     startEditSession,
