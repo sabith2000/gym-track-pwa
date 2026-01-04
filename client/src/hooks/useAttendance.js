@@ -19,7 +19,7 @@ export const useAttendance = () => {
   // --- STATE ---
   const [history, setHistory] = useState({});
   const [loading, setLoading] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine); // <--- We track this already
   
   // Edit Mode State
   const [isEditing, setIsEditing] = useState(false);
@@ -28,17 +28,13 @@ export const useAttendance = () => {
   const timerRef = useRef(null);
 
   // ============================================================
-  // 1. STATS ENGINE (The "Brain" - Refactored)
+  // 1. STATS ENGINE
   // ============================================================
   const stats = useMemo(() => {
-    // A. Calculate Basic Counts (Month vs Lifetime)
     const { total, month } = calculateStats(history);
-    
-    // B. Calculate Streaks
     const currentStreak = calculateStreak(history);
     const bestStreak = calculateBestStreak(history);
 
-    // C. Generate Motivation Message
     let streakMsg = "Start it up! ❄️";
     if (currentStreak >= 3) streakMsg = "Heating up! 🔥";
     if (currentStreak >= 7) streakMsg = "On Fire! 🚀";
@@ -46,11 +42,7 @@ export const useAttendance = () => {
     if (currentStreak >= 30) streakMsg = "God Mode! ⚡";
 
     return {
-      total,       // { present, absent, percentage }
-      month,       // { present, absent, percentage }
-      streak: currentStreak,
-      bestStreak: bestStreak,
-      streakMsg
+      total, month, streak: currentStreak, bestStreak, streakMsg
     };
   }, [history]);
 
@@ -98,17 +90,14 @@ export const useAttendance = () => {
     
     const dateToMark = targetDate || todayStr;
 
-    // Track edited dates to prevent double-edits in one session
     if (targetDate && isEditing) {
       setTouchedDates(prev => new Set(prev).add(dateToMark));
     }
 
-    // 1. Optimistic UI Update
     const newHistory = { ...history, [dateToMark]: status };
     setHistory(newHistory);
     await saveLocalHistory(newHistory);
 
-    // 2. Network Request
     try {
       await submitAttendance(dateToMark, status);
       if (!targetDate) toast.success(`Marked as ${status}!`);
@@ -163,7 +152,6 @@ export const useAttendance = () => {
     }
   }, [processSyncQueue]);
 
-  // Network Listeners
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
@@ -183,8 +171,9 @@ export const useAttendance = () => {
 
   return { 
     history, 
-    stats, // Now contains total, month, streak, bestStreak, streakMsg
+    stats, 
     loading, 
+    isOffline, // <--- EXPORTED NOW
     markAttendance, 
     refresh: loadHistory,
     isEditing,

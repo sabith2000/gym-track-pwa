@@ -18,7 +18,7 @@ const Dashboard = () => {
   } = useAttendance();
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const announcement = "LMS"; // UPDATED: Custom Message
+  const announcement = ""; // UPDATED: Custom Message
 
   const todayStr = formatDateString(
     new Date().getFullYear(),
