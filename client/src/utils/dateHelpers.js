@@ -1,3 +1,5 @@
+import { ATTENDANCE_STATUS } from './constants'; // <--- Import
+
 export const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
 export const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
@@ -20,7 +22,8 @@ export const formatDateString = (year, month, day) => {
 // --- STREAK LOGIC ---
 
 export const calculateStreak = (history) => {
-  const presentDates = new Set(Object.keys(history).filter(date => history[date] === 'PRESENT'));
+  // UPDATED: Use Constant
+  const presentDates = new Set(Object.keys(history).filter(date => history[date] === ATTENDANCE_STATUS.PRESENT));
   let streak = 0;
   let d = new Date(); 
 
@@ -31,7 +34,6 @@ export const calculateStreak = (history) => {
     if (presentDates.has(dStr)) {
       streak++;
     } else {
-      // If Today is missing, don't break streak yet. If Yesterday missing, break.
       if (dStr !== todayStr) break;
     }
     d.setDate(d.getDate() - 1);
@@ -40,9 +42,9 @@ export const calculateStreak = (history) => {
 };
 
 export const calculateBestStreak = (history) => {
-  // Get all 'PRESENT' dates and sort them
+  // UPDATED: Use Constant
   const sortedDates = Object.keys(history)
-    .filter(date => history[date] === 'PRESENT')
+    .filter(date => history[date] === ATTENDANCE_STATUS.PRESENT)
     .sort();
 
   if (sortedDates.length === 0) return 0;
@@ -54,7 +56,6 @@ export const calculateBestStreak = (history) => {
     const prev = new Date(sortedDates[i-1]);
     const curr = new Date(sortedDates[i]);
     
-    // Check if dates are exactly 1 day apart
     const diffTime = Math.abs(curr - prev);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
@@ -69,7 +70,7 @@ export const calculateBestStreak = (history) => {
   return maxStreak;
 };
 
-// --- AGGREGATE STATS (Monthly vs Total) ---
+// --- AGGREGATE STATS ---
 export const calculateStats = (history) => {
   const today = new Date();
   const currentMonthPrefix = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -80,14 +81,13 @@ export const calculateStats = (history) => {
   let monthAbsent = 0;
 
   Object.entries(history).forEach(([date, status]) => {
-    // Total Counts
-    if (status === 'PRESENT') totalPresent++;
-    if (status === 'ABSENT') totalAbsent++;
+    // UPDATED: Use Constants
+    if (status === ATTENDANCE_STATUS.PRESENT) totalPresent++;
+    if (status === ATTENDANCE_STATUS.ABSENT) totalAbsent++;
 
-    // Monthly Counts
     if (date.startsWith(currentMonthPrefix)) {
-      if (status === 'PRESENT') monthPresent++;
-      if (status === 'ABSENT') monthAbsent++;
+      if (status === ATTENDANCE_STATUS.PRESENT) monthPresent++;
+      if (status === ATTENDANCE_STATUS.ABSENT) monthAbsent++;
     }
   });
 

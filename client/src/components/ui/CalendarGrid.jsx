@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { generateCalendarGrid, formatDateString } from '../../utils/dateHelpers';
+import { ATTENDANCE_STATUS } from '../../utils/constants'; // <--- Import
 
 const CalendarGrid = ({ data, isEditing, onDateClick }) => {
   const [viewDate, setViewDate] = useState(new Date());
@@ -45,12 +46,10 @@ const CalendarGrid = ({ data, isEditing, onDateClick }) => {
       ${isEditing ? 'border-red-300 ring-2 ring-red-50 dark:ring-red-900/30 shadow-red-100' : 'border-gray-100 dark:border-slate-800'}
     `}>
       
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <button onClick={prevMonth} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-400">
           <ChevronLeftIcon className="w-5 h-5" />
         </button>
-        {/* UPDATED: dark:text-[#C7CBD1] */}
         <h3 className="text-xl font-extrabold text-gray-900 dark:text-[#C7CBD1] select-none">
           {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </h3>
@@ -67,10 +66,8 @@ const CalendarGrid = ({ data, isEditing, onDateClick }) => {
         </div>
       )}
 
-      {/* Grid */}
       <div className="grid grid-cols-7 gap-3 mb-2">
         {weekDays.map((day) => (
-          // UPDATED: dark:text-[#C7CBD1] with opacity for days of week
           <div key={day} className="text-center text-xs font-bold text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 mb-2">
             {day}
           </div>
@@ -92,9 +89,10 @@ const CalendarGrid = ({ data, isEditing, onDateClick }) => {
             finalClasses += "cursor-default ";
           }
 
-          if (status === 'PRESENT') {
+          // UPDATED: Use Constants for Styling Logic
+          if (status === ATTENDANCE_STATUS.PRESENT) {
             finalClasses += "bg-emerald-500 text-white shadow-emerald-200 dark:shadow-none ";
-          } else if (status === 'ABSENT') {
+          } else if (status === ATTENDANCE_STATUS.ABSENT) {
             finalClasses += "bg-rose-500 text-white shadow-rose-200 dark:shadow-none ";
           } else {
              if (isPast) {

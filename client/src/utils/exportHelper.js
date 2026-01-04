@@ -1,3 +1,5 @@
+import { ATTENDANCE_STATUS } from './constants'; // <--- Import
+
 const FILE_NAME_PREFIX = "GymTrack_Report";
 
 export const generateExcelReport = async (history, stats) => {
@@ -92,7 +94,7 @@ export const generateExcelReport = async (history, stats) => {
       const dateObj = new Date(dateStr);
       
       const row = logSheet.addRow({
-        date: dateObj, // Passing Date Object for Excel filtering
+        date: dateObj, 
         day: dateObj.toLocaleDateString('default', { weekday: 'long' }),
         status: status,
         month: dateObj.toLocaleDateString('default', { month: 'long' }),
@@ -104,7 +106,8 @@ export const generateExcelReport = async (history, stats) => {
       statusCell.font = { bold: true };
       statusCell.alignment = { horizontal: 'center' };
       
-      if (status === 'PRESENT') {
+      // UPDATED: Use Constant here
+      if (status === ATTENDANCE_STATUS.PRESENT) {
         statusCell.font.color = { argb: 'FF15803D' }; // Green text
         statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } }; // Light Green bg
       } else {
