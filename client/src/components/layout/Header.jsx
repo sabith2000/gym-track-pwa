@@ -23,7 +23,7 @@ const Header = ({ onRefresh, loading, isEditing, onUnlock, onLock }) => {
           <div className="flex items-center space-x-3">
             <img src="/pwa-192x192.png" alt="Logo" className="w-10 h-10 rounded-xl shadow-sm" />
             {/* UPDATED: dark:text-[#C7CBD1] */}
-            <h1 className="text-xl font-extrabold text-gray-900 dark:text-[#C7CBD1] tracking-tight">GymTrack</h1>
+            <h1 className="text-xl font-extrabold text-gray-900 dark:text-[#C7CBD1] tracking-tight">Gym-Log</h1>
           </div>
 
           <div className="flex items-center space-x-1">
