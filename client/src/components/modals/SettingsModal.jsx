@@ -116,7 +116,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-400 dark:text-[#C7CBD1] opacity-60">
-            GymTrack v{pkg.version} • Local Storage Only
+            Gym-Log v{pkg.version} • Offline/Online
           </p>
         </div>
       </div>
