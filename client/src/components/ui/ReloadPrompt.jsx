@@ -1,16 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { ArrowPathIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const ReloadPrompt = () => {
-  // This hook listens for Service Worker updates
   const {
     offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r) {
-      console.log('SW Registered: ' + r);
+      console.log('SW Registered');
+      // OPTIONAL: Check for updates every hour
+      if (r) {
+        setInterval(() => {
+          r.update();
+        }, 60 * 60 * 1000);
+      }
     },
     onRegisterError(error) {
       console.log('SW registration error', error);
@@ -29,7 +34,6 @@ const ReloadPrompt = () => {
     <div className="fixed bottom-6 right-6 z-[100] max-w-sm w-full animate-[slide-up_0.3s_ease-out]">
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 p-4 rounded-2xl shadow-2xl flex flex-col gap-3">
         
-        {/* Text Section */}
         <div className="flex items-start justify-between">
           <div className="pr-4">
             <h4 className="font-bold text-gray-900 dark:text-white text-sm">
@@ -49,7 +53,6 @@ const ReloadPrompt = () => {
           </button>
         </div>
 
-        {/* Action Button */}
         {needRefresh && (
           <button
             onClick={() => updateServiceWorker(true)}
