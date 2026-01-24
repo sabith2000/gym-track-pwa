@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { useAttendance } from '../hooks/useAttendance';
 import { useAttendanceStats } from '../hooks/useAttendanceStats';
 import { formatDateString } from '../utils/dateHelpers';
+import pkg from '../../package.json'; // <--- IMPORT 1: Package JSON
 
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
@@ -13,6 +14,7 @@ import EditStatusModal from '../components/modals/EditStatusModal';
 import StatsGrid from '../components/dashboard/StatsGrid';
 import TodayStatusCard from '../components/dashboard/TodayStatusCard'; 
 import SkeletonCard from '../components/ui/SkeletonCard';
+import ChangelogModal from '../components/modals/ChangelogModal'; // <--- IMPORT 2: New Modal
 
 const Dashboard = () => {
   const { 
@@ -27,7 +29,11 @@ const Dashboard = () => {
   const viewedStats = useAttendanceStats(history, viewDate);
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [isRetrying, setIsRetrying] = useState(false); 
+  const [isRetrying, setIsRetrying] = useState(false);
+  
+  // NEW: State for Changelog Modal
+  const [showChangelog, setShowChangelog] = useState(false);
+
   const announcement = ""; 
 
   const todayStr = formatDateString(
@@ -39,6 +45,18 @@ const Dashboard = () => {
 
   const showActionButtons = !todayStatus || isRetrying;
   const showSkeleton = loading && Object.keys(history).length === 0;
+
+  // NEW: Effect to Check Version
+  useEffect(() => {
+    const lastSeenVersion = localStorage.getItem('appVersion');
+    const currentVersion = pkg.version;
+
+    // If version changed (or first visit), show modal
+    if (lastSeenVersion !== currentVersion) {
+      setShowChangelog(true);
+      localStorage.setItem('appVersion', currentVersion); // Update storage immediately
+    }
+  }, []);
 
   useEffect(() => {
     if (todayStatus) {
@@ -171,6 +189,13 @@ const Dashboard = () => {
         onClose={() => setSelectedDate(null)}
         onConfirm={confirmEdit}
       />
+
+      {/* NEW: Changelog Modal */}
+      <ChangelogModal 
+        isOpen={showChangelog}
+        onClose={() => setShowChangelog(false)}
+      />
+
     </div>
   );
 };
