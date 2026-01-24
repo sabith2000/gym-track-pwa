@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useAttendance } from '../hooks/useAttendance';
+import { useAttendanceStats } from '../hooks/useAttendanceStats';
 import { formatDateString } from '../utils/dateHelpers';
 
 import Header from '../components/layout/Header';
@@ -11,13 +12,19 @@ import StatusBanner from '../components/ui/StatusBanner';
 import EditStatusModal from '../components/modals/EditStatusModal';
 import StatsGrid from '../components/dashboard/StatsGrid';
 import TodayStatusCard from '../components/dashboard/TodayStatusCard'; 
-import SkeletonCard from '../components/ui/SkeletonCard'; // <--- NEW IMPORT
+import SkeletonCard from '../components/ui/SkeletonCard';
 
 const Dashboard = () => {
   const { 
-    history, stats, loading, markAttendance, refresh,
+    history, loading, markAttendance, refresh,
     isEditing, startEditSession, endEditSession, editTimer, touchedDates
   } = useAttendance();
+
+  // State to control Calendar View & Stats Math
+  const [viewDate, setViewDate] = useState(new Date());
+
+  // Calculate stats specifically for the viewed month
+  const viewedStats = useAttendanceStats(history, viewDate);
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false); 
@@ -31,9 +38,6 @@ const Dashboard = () => {
   const todayStatus = history[todayStr];
 
   const showActionButtons = !todayStatus || isRetrying;
-
-  // Logic: Show skeletons ONLY on initial load (empty data + loading)
-  // This prevents flickering during background syncs
   const showSkeleton = loading && Object.keys(history).length === 0;
 
   useEffect(() => {
@@ -113,7 +117,6 @@ const Dashboard = () => {
           customMessage={announcement} 
         />
 
-        {/* --- ANIMATED TOGGLE SECTION --- */}
         <div className="mb-6 min-h-[140px] flex flex-col justify-center">
           {showActionButtons ? (
             <div key="buttons" className="animate-[fade-in_0.3s_ease-out]">
@@ -140,10 +143,11 @@ const Dashboard = () => {
             data={history} 
             isEditing={isEditing}
             onDateClick={handleDateClick}
+            viewDate={viewDate}
+            onMonthChange={setViewDate}
           />
         </div>
 
-        {/* --- SKELETON LOADING STATE --- */}
         {showSkeleton ? (
            <div className="grid grid-cols-1 gap-4 mb-8 animate-[fade-in_0.2s_ease-out]">
              <SkeletonCard />
@@ -151,7 +155,10 @@ const Dashboard = () => {
              <SkeletonCard />
            </div>
         ) : (
-           <StatsGrid stats={stats} />
+           <StatsGrid 
+              stats={viewedStats} 
+              monthLabel={viewDate.toLocaleString('default', { month: 'short' })} 
+           />
         )}
 
       </main>

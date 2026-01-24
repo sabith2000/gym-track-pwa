@@ -1,25 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react'; // Removed useState
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { generateCalendarGrid, formatDateString } from '../../utils/dateHelpers';
 import { ATTENDANCE_STATUS } from '../../utils/constants';
 
-const CalendarGrid = ({ data, isEditing, onDateClick }) => {
-  const [viewDate, setViewDate] = useState(new Date());
-
+// UPDATED: Receives viewDate and onMonthChange from parent
+const CalendarGrid = ({ data, isEditing, onDateClick, viewDate, onMonthChange }) => {
+  
   const currentYear = viewDate.getFullYear();
   const currentMonth = viewDate.getMonth();
 
-  // 1. OPTIMIZATION: Memoize calculation to prevent lag on re-renders
   const days = useMemo(() => 
     generateCalendarGrid(currentYear, currentMonth), 
   [currentYear, currentMonth]);
 
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const prevMonth = () => setViewDate(new Date(currentYear, currentMonth - 1, 1));
-  const nextMonth = () => setViewDate(new Date(currentYear, currentMonth + 1, 1));
+  // UPDATED: Uses parent's handler
+  const prevMonth = () => onMonthChange(new Date(currentYear, currentMonth - 1, 1));
+  const nextMonth = () => onMonthChange(new Date(currentYear, currentMonth + 1, 1));
 
-  // Helper to ensure stable Today check
   const isTodayCheck = (day) => {
     if (!day) return false;
     const today = new Date();
@@ -63,7 +62,6 @@ const CalendarGrid = ({ data, isEditing, onDateClick }) => {
           <ChevronLeftIcon className="w-5 h-5" />
         </button>
         
-        {/* Animated Title */}
         <h3 
           key={`${currentYear}-${currentMonth}`} 
           className="text-xl font-extrabold text-gray-900 dark:text-[#C7CBD1] select-none animate-[fade-in_0.2s_ease-out]"
@@ -95,9 +93,6 @@ const CalendarGrid = ({ data, isEditing, onDateClick }) => {
           </div>
         ))}
 
-        {/* 2. THE MAGIC FIX: "key" prop forces React to replace the grid instantly. 
-            No more morphing/flickering numbers. 
-        */}
         <div key={`${currentYear}-${currentMonth}`} className="contents animate-[fade-in_0.2s_ease-out]">
           {days.map((day, index) => {
             if (!day) return <div key={`empty-${index}`} />; 
@@ -115,7 +110,6 @@ const CalendarGrid = ({ data, isEditing, onDateClick }) => {
               finalClasses += "cursor-default ";
             }
 
-            // --- COLOR LOGIC ---
             if (status === ATTENDANCE_STATUS.PRESENT) {
               finalClasses += "bg-emerald-500 text-white shadow-emerald-200 dark:shadow-none ";
             } else if (status === ATTENDANCE_STATUS.ABSENT) {
@@ -129,7 +123,6 @@ const CalendarGrid = ({ data, isEditing, onDateClick }) => {
             }
 
             if (isToday) {
-               // More fluid "Today" ring
                finalClasses += "ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-slate-900 z-10 font-extrabold ";
                if (!status) finalClasses += "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 ";
             }

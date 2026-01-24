@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { calculateStats, calculateStreak, calculateBestStreak } from '../utils/dateHelpers';
 
-export const useAttendanceStats = (history) => {
+// UPDATED: Now accepts 'viewDate' to calculate specific monthly stats
+export const useAttendanceStats = (history, viewDate = new Date()) => {
   return useMemo(() => {
-    const { total, month } = calculateStats(history);
+    // Pass viewDate to helper to filter by selected month
+    const { total, month } = calculateStats(history, viewDate);
     const currentStreak = calculateStreak(history);
     const bestStreak = calculateBestStreak(history);
 
@@ -14,5 +16,5 @@ export const useAttendanceStats = (history) => {
     if (currentStreak >= 30) streakMsg = "God Mode! ⚡";
 
     return { total, month, streak: currentStreak, bestStreak, streakMsg };
-  }, [history]);
+  }, [history, viewDate]); // Re-calculate when month changes
 };

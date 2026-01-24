@@ -2,7 +2,7 @@ import React from 'react';
 import { FireIcon, CalendarDaysIcon, ChartBarIcon } from '@heroicons/react/24/solid';
 import StatCard from '../ui/StatCard';
 
-const StatsGrid = ({ stats }) => {
+const StatsGrid = ({ stats, monthLabel }) => {
   return (
     <div className="grid grid-cols-1 gap-4 mb-8">
       
@@ -35,7 +35,7 @@ const StatsGrid = ({ stats }) => {
               {stats.month.percentage}%
             </span>
             <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 font-bold uppercase tracking-wide">
-              This Month
+              {monthLabel || 'Current'}
             </span>
           </div>
           <div className="pl-4 flex-1">
@@ -49,45 +49,38 @@ const StatsGrid = ({ stats }) => {
         </div>
       </StatCard>
 
-      {/* 3. MONTHLY BREAKDOWN (Colors Updated) */}
+      {/* 3. MONTHLY BREAKDOWN */}
       <StatCard 
-        title="Monthly Breakdown" 
+        title={`Breakdown (${monthLabel || 'Month'})`} 
         icon={FireIcon} 
         color="text-orange-500 bg-orange-500"
       >
         <div className="mt-2 space-y-3">
           
-          {/* Workouts Row - EMERALD GREEN */}
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-600 dark:text-[#C7CBD1] dark:opacity-90">
               ✅ Workouts
             </span>
             <div className="flex items-baseline space-x-1">
-              {/* Distinct Color for Number */}
               <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                 {stats.month.present}
               </span>
-              {/* Matching Tint for Label */}
               <span className="text-xs font-bold text-emerald-600/70 dark:text-emerald-400/70 uppercase">
                 days
               </span>
             </div>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-gray-100 dark:border-slate-800" />
 
-          {/* Rest Days Row - ROSE RED */}
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-gray-600 dark:text-[#C7CBD1] dark:opacity-90">
               💤 Rest Days
             </span>
             <div className="flex items-baseline space-x-1">
-              {/* Distinct Color for Number */}
               <span className="text-3xl font-bold text-rose-600 dark:text-rose-400">
                 {stats.month.absent}
               </span>
-              {/* Matching Tint for Label */}
               <span className="text-xs font-bold text-rose-600/70 dark:text-rose-400/70 uppercase">
                 days
               </span>
