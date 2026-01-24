@@ -6,16 +6,16 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      // --- FIX STARTS HERE: Enable SW in Dev Mode ---
+      // 1. CHANGED: 'autoUpdate' -> 'prompt' (This stops the automatic refresh)
+      registerType: 'prompt', 
+      
       devOptions: {
         enabled: true
       },
-      // --- FIX ENDS HERE ---
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'GymTrack PWA',
-        short_name: 'GymTrack',
+        name: 'Gym-Log', // Updated name to match your rebranding
+        short_name: 'Gym-Log',
         description: 'Offline Gym Attendance Tracker',
         theme_color: '#ffffff',
         background_color: '#ffffff',
