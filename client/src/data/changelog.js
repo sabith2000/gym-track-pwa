@@ -1,5 +1,15 @@
 export const changelogData = [
   {
+    version: "1.4.15",
+    date: "2026-02-15",
+    title: "Level Up & Polish 🚀",
+    changes: [
+      "🏆 Consistency Tiers: Are you Elite or Pro? Check your new status badge.",
+      "🌑 Native Dark Mode: The status bar now blends perfectly with the app theme.",
+      "📊 Layout Upgrade: Prioritized Consistency Score for better focus."
+    ]
+  },
+  {
     version: "1.4.14",
     date: "2026-02-15",
     title: "Sync Fortification 🏰",

@@ -3,10 +3,50 @@ import { FireIcon, CalendarDaysIcon, ChartBarIcon } from '@heroicons/react/24/so
 import StatCard from '../ui/StatCard';
 
 const StatsGrid = ({ stats, monthLabel }) => {
+
+  // NEW: Helper to determine the "Tier" based on consistency
+  const getConsistencyTier = (percentage) => {
+    if (percentage >= 80) return { label: 'ELITE 🔥', color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300' };
+    if (percentage >= 60) return { label: 'PRO 💪', color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300' };
+    if (percentage >= 40) return { label: 'ACTIVE 🏃', color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300' };
+    return { label: 'ROOKIE 🌱', color: 'text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-400' };
+  };
+
+  const tier = getConsistencyTier(stats.month.percentage);
+
   return (
     <div className="grid grid-cols-1 gap-4 mb-8">
       
-      {/* 1. MONTHLY BREAKDOWN (Moved to Top) */}
+      {/* 1. CONSISTENCY SCORE (Now Top - The Hero Card) */}
+      <StatCard 
+        title="Consistency Score" 
+        icon={ChartBarIcon} 
+        color="text-blue-500 bg-blue-500"
+        // NEW: Show the Tier Badge in the top right
+        badge={tier.label}
+        badgeColor={tier.color} 
+      >
+        <div className="flex items-center justify-between divide-x divide-gray-200 dark:divide-slate-700">
+          <div className="pr-4 flex-1">
+            <span className="block text-3xl font-extrabold text-gray-900 dark:text-[#C7CBD1]">
+              {stats.month.percentage}%
+            </span>
+            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 font-bold uppercase tracking-wide">
+              {monthLabel || 'Current'}
+            </span>
+          </div>
+          <div className="pl-4 flex-1">
+            <span className="block text-3xl font-bold text-gray-400 dark:text-[#C7CBD1] dark:opacity-50">
+              {stats.total.percentage}%
+            </span>
+            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-40 font-bold uppercase tracking-wide">
+              All Time
+            </span>
+          </div>
+        </div>
+      </StatCard>
+
+      {/* 2. MONTHLY BREAKDOWN (Middle) */}
       <StatCard 
         title={`Breakdown (${monthLabel || 'Month'})`} 
         icon={FireIcon} 
@@ -47,33 +87,7 @@ const StatsGrid = ({ stats, monthLabel }) => {
         </div>
       </StatCard>
 
-      {/* 2. CONSISTENCY SCORE (Middle) */}
-      <StatCard 
-        title="Consistency Score" 
-        icon={ChartBarIcon} 
-        color="text-blue-500 bg-blue-500"
-      >
-        <div className="flex items-center justify-between divide-x divide-gray-200 dark:divide-slate-700">
-          <div className="pr-4 flex-1">
-            <span className="block text-3xl font-extrabold text-gray-900 dark:text-[#C7CBD1]">
-              {stats.month.percentage}%
-            </span>
-            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 font-bold uppercase tracking-wide">
-              {monthLabel || 'Current'}
-            </span>
-          </div>
-          <div className="pl-4 flex-1">
-            <span className="block text-3xl font-bold text-gray-400 dark:text-[#C7CBD1] dark:opacity-50">
-              {stats.total.percentage}%
-            </span>
-            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-40 font-bold uppercase tracking-wide">
-              All Time
-            </span>
-          </div>
-        </div>
-      </StatCard>
-
-      {/* 3. STREAK CARD (Moved to Bottom) */}
+      {/* 3. STREAK CARD (Bottom) */}
       <StatCard 
         title="Current Streak" 
         icon={CalendarDaysIcon} 

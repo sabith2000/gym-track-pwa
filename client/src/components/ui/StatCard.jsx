@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StatCard = ({ title, icon: Icon, color, children, badge }) => {
+const StatCard = ({ title, icon: Icon, color, children, badge, badgeColor }) => {
   return (
     // UPDATED: Added 'items-center' to vertically align icon with larger text content
     <div className="relative bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-md border border-gray-100 dark:border-slate-800 flex items-center space-x-5 transition-transform hover:scale-[1.01]">
@@ -16,7 +16,8 @@ const StatCard = ({ title, icon: Icon, color, children, badge }) => {
         <p className="text-xs text-gray-500 dark:text-slate-400 uppercase font-bold tracking-wider mb-1 flex justify-between items-center">
           {title}
           {badge && (
-            <span className="ml-2 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 text-[10px] px-2 py-0.5 rounded-full">
+            // FIX: Use 'badgeColor' prop if provided, otherwise default to Yellow
+            <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${badgeColor || 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'}`}>
               {badge}
             </span>
           )}

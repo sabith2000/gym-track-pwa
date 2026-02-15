@@ -6,7 +6,6 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // 1. CHANGED: 'autoUpdate' -> 'prompt' (This stops the automatic refresh)
       registerType: 'prompt', 
       
       devOptions: {
@@ -14,11 +13,13 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Gym-Log', // Updated name to match your rebranding
+        name: 'Gym-Log',
         short_name: 'Gym-Log',
         description: 'Offline Gym Attendance Tracker',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        // 1. CHANGED: Set default theme color to Dark (Slate-950)
+        theme_color: '#020617', 
+        // 2. CHANGED: Set background to Dark (Slate-950) for the splash screen
+        background_color: '#020617', 
         display: 'standalone',
         orientation: 'portrait',
         icons: [
