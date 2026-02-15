@@ -6,50 +6,7 @@ const StatsGrid = ({ stats, monthLabel }) => {
   return (
     <div className="grid grid-cols-1 gap-4 mb-8">
       
-      {/* 1. STREAK CARD */}
-      <StatCard 
-        title="Current Streak" 
-        icon={CalendarDaysIcon} 
-        color="text-emerald-500 bg-emerald-500"
-        badge={`Best: ${stats.bestStreak}`}
-      >
-        <div className="flex flex-col">
-          <span className="text-3xl font-extrabold leading-none text-gray-900 dark:text-[#C7CBD1]">
-            {stats.streak} {stats.streak === 1 ? 'Day' : 'Days'}
-          </span>
-          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-pulse">
-            {stats.streakMsg}
-          </span>
-        </div>
-      </StatCard>
-
-      {/* 2. CONSISTENCY SCORE */}
-      <StatCard 
-        title="Consistency Score" 
-        icon={ChartBarIcon} 
-        color="text-blue-500 bg-blue-500"
-      >
-        <div className="flex items-center justify-between divide-x divide-gray-200 dark:divide-slate-700">
-          <div className="pr-4 flex-1">
-            <span className="block text-3xl font-extrabold text-gray-900 dark:text-[#C7CBD1]">
-              {stats.month.percentage}%
-            </span>
-            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 font-bold uppercase tracking-wide">
-              {monthLabel || 'Current'}
-            </span>
-          </div>
-          <div className="pl-4 flex-1">
-            <span className="block text-3xl font-bold text-gray-400 dark:text-[#C7CBD1] dark:opacity-50">
-              {stats.total.percentage}%
-            </span>
-            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-40 font-bold uppercase tracking-wide">
-              All Time
-            </span>
-          </div>
-        </div>
-      </StatCard>
-
-      {/* 3. MONTHLY BREAKDOWN */}
+      {/* 1. MONTHLY BREAKDOWN (Moved to Top) */}
       <StatCard 
         title={`Breakdown (${monthLabel || 'Month'})`} 
         icon={FireIcon} 
@@ -89,6 +46,50 @@ const StatsGrid = ({ stats, monthLabel }) => {
 
         </div>
       </StatCard>
+
+      {/* 2. CONSISTENCY SCORE (Middle) */}
+      <StatCard 
+        title="Consistency Score" 
+        icon={ChartBarIcon} 
+        color="text-blue-500 bg-blue-500"
+      >
+        <div className="flex items-center justify-between divide-x divide-gray-200 dark:divide-slate-700">
+          <div className="pr-4 flex-1">
+            <span className="block text-3xl font-extrabold text-gray-900 dark:text-[#C7CBD1]">
+              {stats.month.percentage}%
+            </span>
+            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-60 font-bold uppercase tracking-wide">
+              {monthLabel || 'Current'}
+            </span>
+          </div>
+          <div className="pl-4 flex-1">
+            <span className="block text-3xl font-bold text-gray-400 dark:text-[#C7CBD1] dark:opacity-50">
+              {stats.total.percentage}%
+            </span>
+            <span className="text-[11px] text-gray-400 dark:text-[#C7CBD1] dark:opacity-40 font-bold uppercase tracking-wide">
+              All Time
+            </span>
+          </div>
+        </div>
+      </StatCard>
+
+      {/* 3. STREAK CARD (Moved to Bottom) */}
+      <StatCard 
+        title="Current Streak" 
+        icon={CalendarDaysIcon} 
+        color="text-emerald-500 bg-emerald-500"
+        badge={`Best: ${stats.bestStreak}`}
+      >
+        <div className="flex flex-col">
+          <span className="text-3xl font-extrabold leading-none text-gray-900 dark:text-[#C7CBD1]">
+            {stats.streak} {stats.streak === 1 ? 'Day' : 'Days'}
+          </span>
+          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1 animate-pulse">
+            {stats.streakMsg}
+          </span>
+        </div>
+      </StatCard>
+
     </div>
   );
 };

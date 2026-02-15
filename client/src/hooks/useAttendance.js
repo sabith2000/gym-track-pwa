@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { submitAttendance } from '../services/api';
 import { useEditSession } from './useEditSession';
-import { useAttendanceStats } from './useAttendanceStats'; // <--- NEW
-import { useSyncEngine } from './useSyncEngine';           // <--- NEW
+import { useAttendanceStats } from './useAttendanceStats';
+import { useSyncEngine } from './useSyncEngine';
 import { formatDateString } from '../utils/dateHelpers';
 import { saveLocalHistory, addToSyncQueue } from '../utils/syncManager';
 
@@ -14,6 +14,7 @@ export const useAttendance = () => {
 
   // --- 2. SUB-HOOKS ---
   // Sync Engine handles all network/offline logic
+  // Note: ensure useSyncEngine uses reconcileData() internally for fetches!
   const { isOffline, refresh } = useSyncEngine(setHistory);
   
   // Stats Hook handles all calculation logic
@@ -41,6 +42,7 @@ export const useAttendance = () => {
     // Optimistic Update (Immediate UI Change)
     const newHistory = { ...history, [dateToMark]: status };
     setHistory(newHistory);
+    // CRITICAL: We save to local immediately so reconcileData can see it later
     await saveLocalHistory(newHistory);
 
     try {

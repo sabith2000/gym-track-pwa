@@ -15,8 +15,10 @@ export const getLocalHistory = async () => {
 // 2. Add a job to the Sync Queue
 export const addToSyncQueue = async (job) => {
   const queue = (await get(QUEUE_KEY)) || [];
-  queue.push(job); // job = { date: '2026-01-02', status: 'PRESENT' }
-  await set(QUEUE_KEY, queue);
+  // Avoid duplicates in queue for the same date
+  const filteredQueue = queue.filter(q => q.date !== job.date);
+  filteredQueue.push(job); 
+  await set(QUEUE_KEY, filteredQueue);
 };
 
 // 3. Get all waiting jobs
@@ -27,4 +29,18 @@ export const getSyncQueue = async () => {
 // 4. Clear queue after success
 export const clearSyncQueue = async () => {
   await set(QUEUE_KEY, []);
+};
+
+// 5. NEW: Robust Merge Logic (The Fix for Data Loss) 🛡️
+export const reconcileData = async (serverData) => {
+  const localData = (await get(DATA_KEY)) || {};
+  
+  // LOGIC: Server Data is the base, but Local Data overwrites it.
+  // This ensures that if you were offline and marked 'Present', 
+  // the empty server data won't wipe your 'Present' status.
+  const mergedData = { ...serverData, ...localData };
+  
+  // Save this combined truth back to storage
+  await set(DATA_KEY, mergedData);
+  return mergedData;
 };
