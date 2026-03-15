@@ -11,7 +11,21 @@ import {
   getDeviceId,
   getStatusMap,
   mergeServerUpdates,
+  clearAllLocalData,
 } from '../utils/syncManager';
+
+// --- RETRY CONFIG ---
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 3000; // 3s → 9s → 27s
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetryable = (error) => {
+  // Don't retry client errors (4xx) — only server/network errors
+  const status = error?.response?.status;
+  if (status && status >= 400 && status < 500) return false;
+  return true;
+};
 
 export const useSyncEngine = (setHistory) => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -42,19 +56,64 @@ export const useSyncEngine = (setHistory) => {
           `📡 [Sync] Sending ${queue.length} change(s), cursor: ${lastSyncTimestamp}`
         );
 
-        // 2. Call server
-        const response = await syncWithServer({
-          lastSyncTimestamp,
-          deviceId,
-          changes: queue,
-        });
+        // 2. Call server (with retry)
+        let response;
+        let lastError;
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            response = await syncWithServer({
+              lastSyncTimestamp,
+              deviceId,
+              changes: queue,
+            });
+            break; // Success — exit retry loop
+          } catch (error) {
+            lastError = error;
+            if (attempt < MAX_RETRIES && isRetryable(error)) {
+              const delay = BASE_DELAY_MS * Math.pow(3, attempt);
+              console.warn(
+                `⚠️ [Sync] Attempt ${attempt + 1}/${MAX_RETRIES} failed. Retrying in ${delay / 1000}s...`
+              );
+              await sleep(delay);
+            }
+          }
+        }
 
-        // 3. Remove only the items we just sent (safe for mid-sync edits)
+        if (!response) {
+          throw lastError; // All retries exhausted
+        }
+
+        // 3. Handle server-side reset
+        if (response.wasReset) {
+          console.log('🗑️ [Sync] Server reset detected — wiping local data.');
+          await clearAllLocalData();
+
+          // Rebuild local records from server's current state
+          const freshRecords = {};
+          for (const update of response.updates || []) {
+            freshRecords[update.date] = {
+              status: update.status,
+              updatedAt: update.updatedAt,
+              deviceId: update.deviceId,
+            };
+          }
+          await saveRecords(freshRecords);
+          await saveLastSyncTimestamp(response.serverTimestamp);
+          setHistory(getStatusMap(freshRecords));
+
+          toast.success('Data synced from server.', { id: 'sync' });
+          console.log(
+            `✅ [Sync] Reset sync complete. Got ${(response.updates || []).length} record(s) from server.`
+          );
+          return; // Done — skip normal merge path
+        }
+
+        // 4. Remove only the items we just sent (safe for mid-sync edits)
         if (queue.length > 0) {
           await removeFromQueue(queue);
         }
 
-        // 4. Merge server updates into local records (LWW)
+        // 5. Merge server updates into local records (LWW)
         const localRecords = await getRecords();
         const mergedRecords = mergeServerUpdates(
           localRecords,
@@ -62,10 +121,10 @@ export const useSyncEngine = (setHistory) => {
         );
         await saveRecords(mergedRecords);
 
-        // 5. Save the new sync cursor
+        // 6. Save the new sync cursor
         await saveLastSyncTimestamp(response.serverTimestamp);
 
-        // 6. Update React state
+        // 7. Update React state
         setHistory(getStatusMap(mergedRecords));
 
         if (!isBackground && queue.length > 0) {
