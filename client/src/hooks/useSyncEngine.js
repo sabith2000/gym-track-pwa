@@ -30,13 +30,18 @@ const isRetryable = (error) => {
 export const useSyncEngine = (setHistory) => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const syncInProgress = useRef(false); // Prevents overlapping syncs
+  const hasPendingSync = useRef(false); // Remembers if a sync was requested while another was running
 
   // --- CORE SYNC LOOP ---
   const performSync = useCallback(
     async (isBackground = false) => {
-      // Guard: don't overlap syncs
-      if (syncInProgress.current) return;
       if (!navigator.onLine) return;
+
+      // Guard: don't overlap syncs, but REMEMBER that one was requested
+      if (syncInProgress.current) {
+        hasPendingSync.current = true;
+        return;
+      }
 
       syncInProgress.current = true;
 
@@ -141,6 +146,13 @@ export const useSyncEngine = (setHistory) => {
         }
       } finally {
         syncInProgress.current = false;
+        
+        // Auto-drain the queue: if another sync was requested while this one ran, do it now.
+        if (hasPendingSync.current) {
+          hasPendingSync.current = false;
+          console.log('🔄 [Sync] Draining queued sync request...');
+          performSync(isBackground);
+        }
       }
     },
     [setHistory]

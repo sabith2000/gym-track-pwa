@@ -2,6 +2,10 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.1.1] - 2026-03-15
+### Fixed
+- **Edit Mode Sync Drop:** Fixed a race condition in `useSyncEngine` where rapid sequential edits (e.g., tapping 3 past days quickly in Edit Mode) were dropped by the local sync queue. The engine now detects overlapping sync requests and schedules an automatic follow-up sync to completely drain the queue.
+
 ## [v2.1.0] - 2026-03-15
 ### Added
 - **Cross-Device Reset Sync:** New `SyncMeta` model tracks when history was reset. Other devices now detect the reset during sync and automatically wipe stale local data.

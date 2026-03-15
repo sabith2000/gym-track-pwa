@@ -1,5 +1,13 @@
 export const changelogData = [
   {
+    version: "2.1.1",
+    date: "2026-03-15",
+    title: "Edit Mode Sync Fix ⚡",
+    changes: [
+      "🐛 Fixed a bug where rapidly tapping multiple past days in Edit Mode would cause some edits to not sync."
+    ]
+  },
+  {
     version: "2.1.0",
     date: "2026-03-15",
     title: "Sync & Update Hardening 🛡️",
