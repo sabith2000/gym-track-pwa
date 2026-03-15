@@ -1,0 +1,16 @@
+{
+  "name": "gym-log",
+  "version": "2.0.0",
+  "description": "Gym-Log PWA — Offline Gym Attendance Tracker",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --names SERVER,CLIENT --prefix-colors blue,green \"npm run server\" \"npm run client\"",
+    "server": "cd server && npx nodemon server.js",
+    "client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && node server.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

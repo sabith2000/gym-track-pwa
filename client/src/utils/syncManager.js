@@ -1,46 +1,113 @@
-import { get, set } from 'idb-keyval';
+import { get, set, del } from 'idb-keyval';
 
-const QUEUE_KEY = 'offline-sync-queue';
-const DATA_KEY = 'gym-history-cache';
+// --- IDB KEYS ---
+const RECORDS_KEY = 'gym-records';       // { "2026-03-11": { status, updatedAt, deviceId } }
+const QUEUE_KEY = 'gym-sync-queue';      // [{ date, status, updatedAt, deviceId }, ...]
+const LAST_SYNC_KEY = 'gym-last-sync-ts'; // Number (epoch ms)
+const DEVICE_ID_KEY = 'gym-device-id';   // String (UUID)
 
-// 1. Save Attendance Locally (The Source of Truth)
-export const saveLocalHistory = async (data) => {
-  await set(DATA_KEY, data);
+// =============================================
+// 1. DEVICE ID (Generated once, lives forever)
+// =============================================
+export const getDeviceId = async () => {
+  let id = await get(DEVICE_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    await set(DEVICE_ID_KEY, id);
+  }
+  return id;
 };
 
-export const getLocalHistory = async () => {
-  return (await get(DATA_KEY)) || {};
+// =============================================
+// 2. RECORDS STORE (Full local database)
+// =============================================
+// Shape: { "2026-03-11": { status: "PRESENT", updatedAt: 1710185000000, deviceId: "abc" } }
+
+export const getRecords = async () => {
+  return (await get(RECORDS_KEY)) || {};
 };
 
-// 2. Add a job to the Sync Queue
-export const addToSyncQueue = async (job) => {
-  const queue = (await get(QUEUE_KEY)) || [];
-  // Avoid duplicates in queue for the same date
-  const filteredQueue = queue.filter(q => q.date !== job.date);
-  filteredQueue.push(job); 
-  await set(QUEUE_KEY, filteredQueue);
+export const saveRecords = async (records) => {
+  await set(RECORDS_KEY, records);
 };
 
-// 3. Get all waiting jobs
-export const getSyncQueue = async () => {
+// =============================================
+// 3. SYNC QUEUE (Pending changes)
+// =============================================
+
+export const getQueue = async () => {
   return (await get(QUEUE_KEY)) || [];
 };
 
-// 4. Clear queue after success
-export const clearSyncQueue = async () => {
-  await set(QUEUE_KEY, []);
+// Add a change to the queue (de-dupes by date, keeps the latest updatedAt)
+export const addToQueue = async (change) => {
+  const queue = await getQueue();
+  // Remove any existing entry for the same date (the new one is always newer)
+  const filtered = queue.filter((q) => q.date !== change.date);
+  filtered.push(change);
+  await set(QUEUE_KEY, filtered);
 };
 
-// 5. NEW: Robust Merge Logic (The Fix for Data Loss) 🛡️
-export const reconcileData = async (serverData) => {
-  const localData = (await get(DATA_KEY)) || {};
-  
-  // LOGIC: Server Data is the base, but Local Data overwrites it.
-  // This ensures that if you were offline and marked 'Present', 
-  // the empty server data won't wipe your 'Present' status.
-  const mergedData = { ...serverData, ...localData };
-  
-  // Save this combined truth back to storage
-  await set(DATA_KEY, mergedData);
-  return mergedData;
+// Remove only the specific items that were successfully sent
+// (new edits added mid-sync won't be lost)
+export const removeFromQueue = async (sentItems) => {
+  const currentQueue = await getQueue();
+  const sentDates = new Set(sentItems.map((i) => i.date));
+  const remaining = currentQueue.filter((q) => {
+    // Keep if the date wasn't sent, OR if a newer edit was made after the sent one
+    const sent = sentItems.find((s) => s.date === q.date);
+    if (!sent) return true; // Not in sent batch — keep
+    return q.updatedAt > sent.updatedAt; // Newer local edit — keep
+  });
+  await set(QUEUE_KEY, remaining);
+};
+
+// =============================================
+// 4. SYNC TIMESTAMP CURSOR
+// =============================================
+
+export const getLastSyncTimestamp = async () => {
+  return (await get(LAST_SYNC_KEY)) || 0;
+};
+
+export const saveLastSyncTimestamp = async (ts) => {
+  await set(LAST_SYNC_KEY, ts);
+};
+
+// =============================================
+// 5. UTILITIES
+// =============================================
+
+// Convert rich records map → simple status map for UI components
+// { "2026-03-11": { status, updatedAt, deviceId } } → { "2026-03-11": "PRESENT" }
+export const getStatusMap = (records) => {
+  const map = {};
+  for (const [date, record] of Object.entries(records)) {
+    map[date] = record.status;
+  }
+  return map;
+};
+
+// Merge server updates into local records (LWW — only overwrite if newer)
+export const mergeServerUpdates = (localRecords, serverUpdates) => {
+  const merged = { ...localRecords };
+  for (const update of serverUpdates) {
+    const existing = merged[update.date];
+    if (!existing || update.updatedAt > existing.updatedAt) {
+      merged[update.date] = {
+        status: update.status,
+        updatedAt: update.updatedAt,
+        deviceId: update.deviceId,
+      };
+    }
+  }
+  return merged;
+};
+
+// Nuke everything (used by "Reset History" in Settings)
+export const clearAllLocalData = async () => {
+  await del(RECORDS_KEY);
+  await del(QUEUE_KEY);
+  await del(LAST_SYNC_KEY);
+  // Note: We keep DEVICE_ID_KEY — the device identity survives resets
 };

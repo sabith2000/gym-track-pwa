@@ -1,40 +1,47 @@
 const mongoose = require('mongoose');
 
-const attendanceSchema = mongoose.Schema(
-  {
-    // The date is the unique ID. Format: YYYY-MM-DD (e.g., "2026-01-02")
-    date: {
-      type: String,
-      required: true,
-      unique: true,
-      // NEW: Iron Gate Validation 🛡️
-      validate: {
-        validator: function(v) {
-          return /^\d{4}-\d{2}-\d{2}$/.test(v); // Enforce YYYY-MM-DD
-        },
-        message: props => `${props.value} is not a valid date format! Use YYYY-MM-DD.`
-      }
-    },
-    
-    // The current active status
-    status: {
-      type: String,
-      enum: ['PRESENT', 'ABSENT'],
-      required: true,
-    },
-
-    // The Audit Trail
-    history: [
-      {
-        action: { type: String, required: true }, 
-        timestamp: { type: Date, default: Date.now }, 
-        device: { type: String, default: 'web' } 
-      }
-    ]
+const attendanceSchema = mongoose.Schema({
+  // Multi-user ready, but defaults to single user for now
+  userId: {
+    type: String,
+    required: true,
+    default: 'default_user',
   },
-  {
-    timestamps: true, 
-  }
-);
+
+  // The calendar date. Format: YYYY-MM-DD (e.g., "2026-03-15")
+  date: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(v);
+      },
+      message: (props) =>
+        `${props.value} is not a valid date format! Use YYYY-MM-DD.`,
+    },
+  },
+
+  // PRESENT or ABSENT
+  status: {
+    type: String,
+    enum: ['PRESENT', 'ABSENT'],
+    required: true,
+  },
+
+  // LWW timestamp — epoch milliseconds (e.g., 1710185000000)
+  updatedAt: {
+    type: Number,
+    required: true,
+  },
+
+  // Fingerprint of the device that made this edit
+  deviceId: {
+    type: String,
+    required: true,
+  },
+});
+
+// 🛡️ Compound unique index — guarantees one record per user per day
+attendanceSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 module.exports = mongoose.model('Attendance', attendanceSchema);

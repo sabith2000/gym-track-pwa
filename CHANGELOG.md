@@ -2,6 +2,23 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.0.0] - 2026-03-15
+### Added
+- **CRDT-Lite Sync Engine:** Rebuilt the offline sync system from scratch using a Last-Write-Wins (LWW) strategy with `updatedAt` timestamps and `deviceId` fingerprinting.
+- **Bi-Directional Sync:** Single `POST /api/attendance/sync` endpoint replaces old GET/POST routes. Client sends pending changes and receives missed updates in one round-trip.
+- **Atomic Server Merges:** MongoDB BulkWrite with aggregation pipelines ensures conflict resolution happens at the database level, not in application code.
+- **Clock-Drift Guard:** Server rejects any timestamp more than 24 hours in the future to prevent faulty device clocks from corrupting data.
+
+### Changed
+- **Data Model:** Attendance records now include `userId`, `updatedAt` (epoch ms), and `deviceId`. Old `history` audit trail array removed.
+- **Sync Manager:** Rewrote `syncManager.js` with richer IndexedDB storage — records map, sync queue, timestamp cursor, and device UUID.
+- **Hooks:** Rewrote `useSyncEngine.js` (bi-directional sync loop) and `useAttendance.js` (LWW-aware edits).
+- **Settings Reset:** Now clears local IndexedDB data alongside the server reset for a true factory reset.
+
+### Removed
+- Old `GET /api/attendance` and `POST /api/attendance` endpoints (replaced by sync endpoint).
+- 2-minute heartbeat polling interval (replaced by visibility-change trigger).
+
 ## [v1.3.1] - 2026-01-04
 ### Refactor
 - **Hooks:** Extracted edit session logic (timer, locking) from `useAttendance` into a new `useEditSession` hook.

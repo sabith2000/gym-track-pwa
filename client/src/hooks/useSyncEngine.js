@@ -1,109 +1,138 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
-import { fetchHistory, submitAttendance } from '../services/api';
-import { 
-  saveLocalHistory, 
-  getLocalHistory, 
-  getSyncQueue, 
-  clearSyncQueue 
+import { syncWithServer } from '../services/api';
+import {
+  getRecords,
+  saveRecords,
+  getQueue,
+  removeFromQueue,
+  getLastSyncTimestamp,
+  saveLastSyncTimestamp,
+  getDeviceId,
+  getStatusMap,
+  mergeServerUpdates,
 } from '../utils/syncManager';
 
 export const useSyncEngine = (setHistory) => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const syncInProgress = useRef(false); // Prevents overlapping syncs
 
-  // --- 1. CORE SYNC LOGIC ---
-  const processServerData = async (dataArray) => {
-    const map = {};
-    dataArray.forEach(record => {
-      map[record.date] = record.status;
-    });
-    setHistory(map);
-    await saveLocalHistory(map);
-  };
+  // --- CORE SYNC LOOP ---
+  const performSync = useCallback(
+    async (isBackground = false) => {
+      // Guard: don't overlap syncs
+      if (syncInProgress.current) return;
+      if (!navigator.onLine) return;
 
-  const processSyncQueue = useCallback(async (isBackground = false) => {
-    const queue = await getSyncQueue();
-    
-    // A. Upload Pending Data
-    if (queue.length > 0) {
+      syncInProgress.current = true;
+
       try {
-        if (!isBackground) toast.loading('Syncing offline data...', { id: 'sync' });
-        console.log(`📡 [Sync] Attempting to flush ${queue.length} items...`);
-        
-        for (const job of queue) {
-          await submitAttendance(job.date, job.status);
+        // 1. Gather local state
+        const [queue, lastSyncTimestamp, deviceId] = await Promise.all([
+          getQueue(),
+          getLastSyncTimestamp(),
+          getDeviceId(),
+        ]);
+
+        if (!isBackground && queue.length > 0) {
+          toast.loading('Syncing...', { id: 'sync' });
         }
-        
-        await clearSyncQueue();
-        if (!isBackground) toast.success('Sync Complete!', { id: 'sync' });
+
+        console.log(
+          `📡 [Sync] Sending ${queue.length} change(s), cursor: ${lastSyncTimestamp}`
+        );
+
+        // 2. Call server
+        const response = await syncWithServer({
+          lastSyncTimestamp,
+          deviceId,
+          changes: queue,
+        });
+
+        // 3. Remove only the items we just sent (safe for mid-sync edits)
+        if (queue.length > 0) {
+          await removeFromQueue(queue);
+        }
+
+        // 4. Merge server updates into local records (LWW)
+        const localRecords = await getRecords();
+        const mergedRecords = mergeServerUpdates(
+          localRecords,
+          response.updates || []
+        );
+        await saveRecords(mergedRecords);
+
+        // 5. Save the new sync cursor
+        await saveLastSyncTimestamp(response.serverTimestamp);
+
+        // 6. Update React state
+        setHistory(getStatusMap(mergedRecords));
+
+        if (!isBackground && queue.length > 0) {
+          toast.success('Sync Complete!', { id: 'sync' });
+        }
+
+        console.log(
+          `✅ [Sync] Done. Got ${(response.updates || []).length} update(s) from server.`
+        );
       } catch (error) {
-        console.error("❌ [Sync] Failed.", error);
-        if (!isBackground) toast.error('Sync failed. Will retry automatically.', { id: 'sync' });
-        return; 
+        console.error('❌ [Sync] Failed:', error.message || error);
+        if (!isBackground) {
+          toast.error('Sync failed. Will retry.', { id: 'sync' });
+        }
+      } finally {
+        syncInProgress.current = false;
       }
+    },
+    [setHistory]
+  );
+
+  // --- INITIAL LOAD (fast local → then sync) ---
+  const loadAndSync = useCallback(async () => {
+    // 1. Instantly show local data (feels fast)
+    const localRecords = await getRecords();
+    if (Object.keys(localRecords).length > 0) {
+      setHistory(getStatusMap(localRecords));
     }
 
-    // B. Smart Polling (Download New Data)
-    try {
-      const serverData = await fetchHistory();
-      processServerData(serverData);
-    } catch (e) {
-      console.log('Silent fetch failed (offline or server cold)');
-    }
-  }, [setHistory]);
+    // 2. Run a sync to get fresh data
+    await performSync(false);
+  }, [performSync, setHistory]);
 
-  const loadHistory = useCallback(async () => {
-    // 1. Load Local (Fast)
-    const localData = await getLocalHistory();
-    if (localData && Object.keys(localData).length > 0) {
-      setHistory(localData);
-    }
-    // 2. Fetch Server (Fresh)
-    try {
-      const data = await fetchHistory();
-      processServerData(data);
-      processSyncQueue(false); 
-    } catch (error) {
-      console.log('Network failed, using local data.');
-      setIsOffline(true);
-    }
-  }, [processSyncQueue, setHistory]);
-
-  // --- 2. LIFECYCLE LISTENERS ---
+  // --- LIFECYCLE LISTENERS ---
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
       toast.success('Back Online!');
-      processSyncQueue(false);
-      loadHistory();
+      performSync(false);
     };
+
     const handleOffline = () => setIsOffline(true);
-    
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && navigator.onLine) {
-        console.log('👁️ Tab Focused: Refreshing Data...');
-        processSyncQueue(true);
+        console.log('👁️ Tab Focused: Syncing...');
+        performSync(true);
       }
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    loadHistory(); // Initial Load
 
-    // Heartbeat (2 mins)
-    const heartbeatInterval = setInterval(() => {
-      if (navigator.onLine) processSyncQueue(true);
-    }, 120000); 
+    // Initial load + sync
+    loadAndSync();
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(heartbeatInterval);
     };
-  }, [loadHistory, processSyncQueue]);
+  }, [loadAndSync, performSync]);
 
-  return { isOffline, refresh: loadHistory };
+  return {
+    isOffline,
+    triggerSync: performSync, // Exposed for post-edit immediate sync
+    refresh: loadAndSync,     // Exposed for manual pull-to-refresh
+  };
 };

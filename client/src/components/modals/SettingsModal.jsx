@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAttendance } from '../../hooks/useAttendance';
 import { generateExcelReport } from '../../utils/exportHelper';
 import api from '../../services/api';
+import { clearAllLocalData } from '../../utils/syncManager';
 import pkg from '../../../package.json';
 import ConfirmDialog from './ConfirmDialog'; // <--- Import New Component
 
@@ -50,10 +51,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
       }
       
       await api.delete('/attendance'); // Call Backend
+      await clearAllLocalData(); // Wipe local IDB (records, queue, timestamp)
       
-      // FIX 2: Force a hard reload. 
-      // This is safer than verifyRefresh() for a "Factory Reset" because 
-      // it clears all transient state (Edit Mode, Selected Dates, etc.)
       toast.success("History Reset Successfully");
       setTimeout(() => {
         window.location.reload(); 

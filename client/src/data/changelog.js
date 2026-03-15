@@ -1,5 +1,17 @@
 export const changelogData = [
   {
+    version: "2.0.0",
+    date: "2026-03-15",
+    title: "Sync Engine V2 ⚡",
+    changes: [
+      "🔄 Rebuilt Sync Engine: Your data now syncs smarter using a Last-Write-Wins strategy.",
+      "📡 Bi-Directional Sync: Send and receive changes in one shot — faster and more reliable.",
+      "🛡️ Conflict Protection: If two devices edit the same day, the latest edit always wins.",
+      "🔒 Atomic Merges: Conflict resolution happens at the database level for maximum safety.",
+      "⏰ Clock Guard: Prevents bad timestamps from corrupting your data."
+    ]
+  },
+  {
     version: "1.4.15",
     date: "2026-02-15",
     title: "Level Up & Polish 🚀",
