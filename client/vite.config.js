@@ -12,13 +12,22 @@ export default defineConfig({
         enabled: true
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+
+      // Workbox runtime caching — ensure API calls NEVER get cached by SW
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^.*\/api\/.*/i,
+            handler: 'NetworkOnly',
+          },
+        ],
+      },
+
       manifest: {
         name: 'Gym-Log',
         short_name: 'Gym-Log',
         description: 'Offline Gym Attendance Tracker',
-        // 1. CHANGED: Set default theme color to Dark (Slate-950)
         theme_color: '#020617', 
-        // 2. CHANGED: Set background to Dark (Slate-950) for the splash screen
         background_color: '#020617', 
         display: 'standalone',
         orientation: 'portrait',
@@ -37,4 +46,4 @@ export default defineConfig({
       }
     })
   ]
-});
+});
