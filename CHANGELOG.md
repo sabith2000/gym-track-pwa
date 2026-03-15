@@ -2,6 +2,16 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.1.0] - 2026-03-15
+### Added
+- **Cross-Device Reset Sync:** New `SyncMeta` model tracks when history was reset. Other devices now detect the reset during sync and automatically wipe stale local data.
+- **Sync Retry:** Failed syncs now retry up to 3 times with exponential backoff (3s → 9s → 27s). Only retries on server/network errors, not client errors.
+- **API Cache Guard:** Added `NetworkOnly` Workbox runtime caching strategy for `/api/*` routes, preventing the service worker from ever caching sync responses.
+
+### Fixed
+- **Update Banner Persistence:** Dismissing the "New version available" banner no longer hides it permanently. It reappears when the user returns to the app (tab focus / reopen).
+- **Interval Leak:** The hourly service worker update check is now properly cleaned up via `useEffect`.
+
 ## [v2.0.0] - 2026-03-15
 ### Added
 - **CRDT-Lite Sync Engine:** Rebuilt the offline sync system from scratch using a Last-Write-Wins (LWW) strategy with `updatedAt` timestamps and `deviceId` fingerprinting.

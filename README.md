@@ -1,6 +1,6 @@
 # Gym-Log 🏋️‍♂️
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.1.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-enabled-blueviolet?style=for-the-badge&logo=pwa&logoColor=white)
@@ -113,7 +113,7 @@ The Express server serves the built client from `client/dist` at `http://localho
 
 ---
 
-## 📡 Sync Architecture (v2.0.0)
+## 📡 Sync Architecture (v2.1.0)
 
 Gym-Log uses a **CRDT-lite Last-Write-Wins** strategy for offline sync:
 
@@ -122,6 +122,8 @@ Gym-Log uses a **CRDT-lite Last-Write-Wins** strategy for offline sync:
 - The server uses **atomic MongoDB BulkWrite** operations to enforce LWW at the database level
 - A **24-hour clock-drift guard** prevents faulty timestamps from corrupting data
 - The client stores data in IndexedDB and queues offline changes for sync on reconnection
+- **Retry with backoff** — failed syncs retry up to 3 times (3s → 9s → 27s)
+- **Cross-device reset** — resetting history on one device propagates to all others via a `SyncMeta` breadcrumb
 
 ---
 
@@ -139,7 +141,7 @@ gym-track-pwa/
 │   └── package.json
 ├── server/               # Express backend
 │   ├── controllers/      # syncController, attendanceController
-│   ├── models/           # Attendance (Mongoose schema)
+│   ├── models/           # Attendance, SyncMeta (Mongoose schemas)
 │   ├── routes/           # attendanceRoutes
 │   └── server.js
 ├── package.json          # Root (concurrently dev script)

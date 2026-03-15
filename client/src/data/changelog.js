@@ -1,5 +1,17 @@
 export const changelogData = [
   {
+    version: "2.1.0",
+    date: "2026-03-15",
+    title: "Sync & Update Hardening 🛡️",
+    changes: [
+      "🔄 Cross-Device Reset: Resetting history on one device now properly syncs to all your other devices.",
+      "🔁 Smart Retry: If syncing fails (network issues), the app now retries automatically up to 3 times.",
+      "📌 Persistent Update Banner: Dismissing an app update prompt now re-shows it when you return — no more missed updates.",
+      "🛡️ API Cache Guard: Ensured the service worker never caches API calls, preventing stale sync data.",
+      "🧹 Minor: Fixed a resource leak in the update checker."
+    ]
+  },
+  {
     version: "2.0.0",
     date: "2026-03-15",
     title: "Sync Engine V2 ⚡",
