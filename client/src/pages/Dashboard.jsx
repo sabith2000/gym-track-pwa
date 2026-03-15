@@ -122,6 +122,7 @@ const Dashboard = () => {
       <Header 
         onRefresh={handleManualRefresh} 
         loading={loading}
+        isOffline={isOffline}
         isEditing={isEditing}
         onUnlock={startEditSession} 
         onLock={endEditSession}     

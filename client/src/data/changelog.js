@@ -1,5 +1,16 @@
 export const changelogData = [
   {
+    version: "2.2.0",
+    date: "2026-03-15",
+    title: "Smarter Exports & UI Overhaul 📊",
+    changes: [
+      "🚀 Data Export instantly grabs the freshest data without requiring a page reload.",
+      "🕰️ Exported Excel files now have precise IST timestamps in their filenames.",
+      "🎨 Export Dashboard sheet completely redesigned for a cleaner, modern look.",
+      "🔍 Added Auto-Filters and Frozen Headers to the Daily Log Excel sheet."
+    ]
+  },
+  {
     version: "2.1.2",
     date: "2026-03-15",
     title: "Database Reset Hardening 🛡️",

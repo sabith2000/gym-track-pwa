@@ -2,6 +2,17 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.2.0] - 2026-03-15
+### Added
+- **Export Filters & Freezing:** Added `AutoFilter` dropdowns and frozen top headers to the Daily Log sheet in exported Excel files.
+- **Timestamped Filenames:** Exported Excel files now include precise IST (Indian Standard Time) timestamps in their filenames to prevent overwriting multiple daily exports.
+
+### Changed
+- **Export Dashboard Overhaul:** Completely redesigned the 'Dashboard' sheet in the exported Excel file with modern typography, improved spacing, and professional color contrast.
+
+### Fixed
+- **Stale Export Bug & Background Loop:** Fixed a critical bug where the Settings Modal was maintaining a disconnected, duplicate sync engine state. Exporting history now fetches fresh data instantly from the local database ensuring 100% data accuracy without a page reload.
+
 ## [v2.1.2] - 2026-03-15
 ### Fixed
 - **Hard Database Wipe Sync:** Handled an edge case where manually deleting all records directly from the database (bypassing the app UI) prevented clients from resetting. The server now cross-references the client's historical sync timestamp against the total server record count to deduce manual wipes.

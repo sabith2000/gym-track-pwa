@@ -3,7 +3,7 @@ import { LockClosedIcon, LockOpenIcon, ArrowPathIcon, AdjustmentsHorizontalIcon 
 import PinModal from '../modals/PinModal';
 import SettingsModal from '../modals/SettingsModal';
 
-const Header = ({ onRefresh, loading, isEditing, onUnlock, onLock }) => {
+const Header = ({ onRefresh, loading, isEditing, isOffline, onUnlock, onLock }) => {
   const [showPinModal, setShowPinModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -63,6 +63,7 @@ const Header = ({ onRefresh, loading, isEditing, onUnlock, onLock }) => {
 
       <SettingsModal 
         isOpen={showSettings}
+        isOffline={isOffline}
         onClose={() => setShowSettings(false)}
       />
     </>

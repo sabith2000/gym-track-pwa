@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { XMarkIcon, MoonIcon, SunIcon, ArrowDownTrayIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '../../context/ThemeContext';
-import { useAttendance } from '../../hooks/useAttendance';
 import { generateExcelReport } from '../../utils/exportHelper';
 import api from '../../services/api';
 import { clearAllLocalData } from '../../utils/syncManager';
 import pkg from '../../../package.json';
 import ConfirmDialog from './ConfirmDialog'; // <--- Import New Component
 
-const SettingsModal = ({ isOpen, onClose }) => {
+const SettingsModal = ({ isOpen, onClose, isOffline }) => {
   const { theme, toggleTheme } = useTheme();
-  const { history, stats, isOffline } = useAttendance(); 
   
   const [exporting, setExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // New State for Modal
@@ -23,18 +21,17 @@ const SettingsModal = ({ isOpen, onClose }) => {
       toast.error("Connect to internet to download report.");
       return;
     }
-    if (Object.keys(history).length === 0) {
-      toast("No history to export yet!", { icon: '📝' });
-      return;
-    }
-
     setExporting(true);
     try {
-      await generateExcelReport(history, stats);
+      await generateExcelReport();
       toast.success("Report Downloaded!");
     } catch (error) {
-      console.error(error);
-      toast.error("Export failed. Try again.");
+      if (error.message === "NoHistory") {
+        toast("No history to export yet!", { icon: '📝' });
+      } else {
+        console.error(error);
+        toast.error("Export failed. Try again.");
+      }
     } finally {
       setExporting(false);
     }
