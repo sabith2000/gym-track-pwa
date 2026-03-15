@@ -18,7 +18,7 @@ import ChangelogModal from '../components/modals/ChangelogModal'; // <--- IMPORT
 
 const Dashboard = () => {
   const { 
-    history, loading, markAttendance, refresh,
+    history, loading, isOffline, markAttendance, refresh,
     isEditing, startEditSession, endEditSession, editTimer, touchedDates
   } = useAttendance();
 
