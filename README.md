@@ -1,8 +1,19 @@
 # Gym-Log 🏋️‍♂️
 
-A robust, **Offline-First** Progressive Web App (PWA) for tracking daily gym attendance. Mark yourself as Present or Absent each day, review your stats, and stay consistent — even without internet.
+![Version](https://img.shields.io/badge/version-2.0.0-blue?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)
+![PWA](https://img.shields.io/badge/PWA-enabled-blueviolet?style=for-the-badge&logo=pwa&logoColor=white)
+![Offline](https://img.shields.io/badge/offline--first-yes-orange?style=for-the-badge)
 
-**Current Version:** `v2.0.0`
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)
+
+A robust, **Offline-First** Progressive Web App (PWA) for tracking daily gym attendance. Mark yourself as Present or Absent each day, review your stats, and stay consistent — even without internet.
 
 ---
 
