@@ -1,5 +1,15 @@
 export const changelogData = [
   {
+    version: "2.2.1",
+    date: "2026-03-15",
+    title: "Advanced Excel Analytics 📈",
+    changes: [
+      "🧠 New Algorithms: Calculates your Most/Least Active Days and Longest Rest period.",
+      "📊 Month-Over-Month Trends: See a complete breakdown of your consistency for every month.",
+      "✨ KPI Dashboard: The Excel export now features 3 beautiful, distinct analytics tables instead of just one."
+    ]
+  },
+  {
     version: "2.2.0",
     date: "2026-03-15",
     title: "Smarter Exports & UI Overhaul 📊",

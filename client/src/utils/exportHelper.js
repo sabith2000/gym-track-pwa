@@ -1,6 +1,6 @@
 import { ATTENDANCE_STATUS } from './constants';
 import { getRecords, getStatusMap } from './syncManager';
-import { calculateStats, calculateStreak, calculateBestStreak } from './dateHelpers';
+import { calculateStats, calculateStreak, calculateBestStreak, calculateAdvancedStats } from './dateHelpers';
 
 const FILE_NAME_PREFIX = "GymTrack_Report";
 
@@ -14,8 +14,9 @@ export const generateExcelReport = async () => {
     const { total } = calculateStats(history);
     const streak = calculateStreak(history);
     const bestStreak = calculateBestStreak(history);
+    const advanced = calculateAdvancedStats(history);
 
-    if (Object.keys(history).length === 0) {
+    if (Object.keys(history).length === 0 || !advanced) {
       throw new Error("NoHistory");
     }
 
@@ -44,20 +45,20 @@ export const generateExcelReport = async () => {
     subtitleCell.font = { name: 'Arial', size: 10, italic: true, color: { argb: 'FF64748B' } };
     subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-    // 2. Key Stats Table
-    summarySheet.getCell('B5').value = 'Key Metrics';
+    // 2. Core Metrics Table
+    summarySheet.getCell('B5').value = 'Core Metrics';
     summarySheet.getCell('B5').font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1E293B' } };
     
     const statsData = [
       ['Metric', 'Value'],
-      ['Current Streak', `${streak} Days`],
-      ['Best Streak', `${bestStreak} Days`],
+      ['Total Days Tracked', total.present + total.absent],
       ['Total Attendance', `${total.percentage}%`],
       ['Days Present', total.present],
       ['Days Absent', total.absent],
+      ['Current Streak', `${streak} Days`],
+      ['Best Streak', `${bestStreak} Days`],
     ];
 
-    // Add Stats Table
     statsData.forEach((row, index) => {
       const rowIndex = 6 + index;
       const labelCell = summarySheet.getCell(`B${rowIndex}`);
@@ -65,35 +66,120 @@ export const generateExcelReport = async () => {
       
       labelCell.value = row[0];
       valueCell.value = row[1];
-
-      // Row Height
       summarySheet.getRow(rowIndex).height = 22;
-
-      // Styling
-      labelCell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
-      valueCell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
       
       labelCell.alignment = { vertical: 'middle' };
-      labelCell.font = { name: 'Arial', size: 11, color: { argb: 'FF334155' } };
-      
       valueCell.alignment = { horizontal: 'right', vertical: 'middle' };
-      valueCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0F172A' } };
       
       if (index === 0) { // Header Row
         labelCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
-        labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } }; // Royal Blue
         valueCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
-        valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
-        labelCell.border = {}; // Clear bottom border on header 
-        valueCell.border = {};
+        labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } }; // Deep Navy
+        valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
       } else {
-        labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }; // Light Slate
+        labelCell.font = { name: 'Arial', size: 11, color: { argb: 'FF334155' } };
+        valueCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+        if (index % 2 === 0) {
+           labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } }; // Light Slate
+           valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+        }
       }
+      labelCell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, left: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+      valueCell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+    });
+
+    // 3. Advanced Analytics Table
+    summarySheet.getCell('E5').value = 'Advanced Analytics';
+    summarySheet.getCell('E5').font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+
+    const advData = [
+      ['Insight', 'Value'],
+      ['Most Active Day', `${advanced.mostActiveDay.name} (${advanced.mostActiveDay.percentage}%)`],
+      ['Least Active Day', `${advanced.leastActiveDay.name} (${advanced.leastActiveDay.percentage}%)`],
+      ['Most Consistent Month', `${advanced.mostConsistentMonth.label} (${advanced.mostConsistentMonth.percentage}%)`],
+      ['Longest Rest Period', `${advanced.longestRest} Days`],
+    ];
+
+    advData.forEach((row, index) => {
+      const rowIndex = 6 + index;
+      const labelCell = summarySheet.getCell(`E${rowIndex}`);
+      const valueCell = summarySheet.getCell(`F${rowIndex}`);
+      
+      labelCell.value = row[0];
+      valueCell.value = row[1];
+      summarySheet.getRow(rowIndex).height = 22;
+
+      labelCell.alignment = { vertical: 'middle' };
+      valueCell.alignment = { horizontal: 'right', vertical: 'middle' };
+      
+      if (index === 0) { // Header
+         labelCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+         valueCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+         labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } }; 
+         valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+      } else {
+         labelCell.font = { name: 'Arial', size: 11, color: { argb: 'FF334155' } };
+         valueCell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FF0F172A' } };
+         if (index % 2 === 0) {
+            labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+            valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+         }
+      }
+      labelCell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, left: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+      valueCell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+    });
+
+    // 4. Monthly Trends Table
+    const trendsStartRow = Math.max(statsData.length, advData.length) + 8;
+    summarySheet.getCell(`B${trendsStartRow}`).value = 'Monthly Trends';
+    summarySheet.getCell(`B${trendsStartRow}`).font = { name: 'Arial', size: 14, bold: true, color: { argb: 'FF1E293B' } };
+
+    const trendsHeader = ['Month', 'Days Logged', 'Present', 'Absent', 'Consistency %'];
+    const trendsRowHeader = trendsStartRow + 1;
+    
+    trendsHeader.forEach((col, i) => {
+      const cell = summarySheet.getCell(trendsRowHeader, 2 + i); // Column B is 2
+      cell.value = col;
+      cell.font = { name: 'Arial', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } }; // Royal Blue
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, top: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+    });
+    summarySheet.getRow(trendsRowHeader).height = 25;
+
+    advanced.monthlyTrends.forEach((month, index) => {
+      const r = trendsRowHeader + 1 + index;
+      summarySheet.getRow(r).height = 22;
+      
+      const c1 = summarySheet.getCell(r, 2); // Month
+      const c2 = summarySheet.getCell(r, 3); // Logged
+      const c3 = summarySheet.getCell(r, 4); // Present
+      const c4 = summarySheet.getCell(r, 5); // Absent
+      const c5 = summarySheet.getCell(r, 6); // Consistency
+      
+      c1.value = month.label;
+      c2.value = month.total;
+      c3.value = month.present;
+      c4.value = month.absent;
+      c5.value = `${month.percentage}%`;
+
+      [c1, c2, c3, c4, c5].forEach(cell => {
+         cell.font = { name: 'Arial', size: 11, color: { argb: 'FF334155' } };
+         cell.alignment = { horizontal: 'center', vertical: 'middle' };
+         cell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, left: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+         if (index % 2 !== 0) { // odd index data rows -> zebra
+           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+         }
+      });
+      c5.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FF0F172A' } };
     });
 
     // Set Column Widths for Summary
-    summarySheet.getColumn('B').width = 20;
+    summarySheet.getColumn('B').width = 22;
     summarySheet.getColumn('C').width = 15;
+    summarySheet.getColumn('D').width = 5; // Spacing
+    summarySheet.getColumn('E').width = 25;
+    summarySheet.getColumn('F').width = 20;
 
     // ==========================================
     // SHEET 2: DETAILED LOG

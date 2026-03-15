@@ -2,6 +2,14 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.2.1] - 2026-03-15
+### Added
+- **Advanced Excel Analytics:** The exported Excel Dashboard sheet now includes three comprehensive tables: Core Metrics, Advanced Analytics, and Monthly Trends.
+- **New KPIs:** The export engine now calculates Most Active Day, Least Active Day, Longest Rest Period, and dynamic Month-Over-Month consistency percentages.
+
+### Changed
+- **Dashboard UI Overhaul:** Upgraded the Excel Dashboard with premium formatting, including deep navy headers, alternating zebra-striped rows, and wider column spacing.
+
 ## [v2.2.0] - 2026-03-15
 ### Added
 - **Export Filters & Freezing:** Added `AutoFilter` dropdowns and frozen top headers to the Daily Log sheet in exported Excel files.

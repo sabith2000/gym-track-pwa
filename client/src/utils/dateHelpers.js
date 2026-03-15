@@ -131,3 +131,121 @@ export const calculateBestStreak = (history) => {
 
   return maxStreak;
 };
+
+// NEW: Advanced Analytics for Excel Reporting (v2.2.1)
+export const calculateAdvancedStats = (history) => {
+  const dates = Object.keys(history).sort();
+  if (dates.length === 0) return null;
+
+  // 1. Day of Week Distribution
+  const dayStats = {
+    0: { present: 0, absent: 0, name: 'Sunday' },
+    1: { present: 0, absent: 0, name: 'Monday' },
+    2: { present: 0, absent: 0, name: 'Tuesday' },
+    3: { present: 0, absent: 0, name: 'Wednesday' },
+    4: { present: 0, absent: 0, name: 'Thursday' },
+    5: { present: 0, absent: 0, name: 'Friday' },
+    6: { present: 0, absent: 0, name: 'Saturday' },
+  };
+
+  // 2. Longest Rest
+  let longestRest = 0;
+  let currentRest = 0;
+
+  // 3. Monthly Trends
+  const monthlyTrends = {}; // Format: 'YYYY-MM': { present, absent, name }
+
+  dates.forEach(dateStr => {
+    const status = history[dateStr];
+    // Create Date safely by parsing local parts
+    const [y, m, d] = dateStr.split('-');
+    const dateObj = new Date(y, m - 1, d);
+    
+    // Day of Week tracking
+    const dayOfWeek = dateObj.getDay();
+    if (status === ATTENDANCE_STATUS.PRESENT) {
+      dayStats[dayOfWeek].present++;
+    } else {
+      dayStats[dayOfWeek].absent++;
+    }
+
+    // Longest Rest Tracking (Consecutive ABSENT)
+    if (status === ATTENDANCE_STATUS.ABSENT) {
+      currentRest++;
+      if (currentRest > longestRest) longestRest = currentRest;
+    } else {
+      currentRest = 0;
+    }
+
+    // Monthly Trends Grouping
+    const monthKey = `${y}-${m}`;
+    const monthName = dateObj.toLocaleString('default', { month: 'short' });
+    const fullKey = `${monthName} ${y}`;
+
+    if (!monthlyTrends[monthKey]) {
+      monthlyTrends[monthKey] = { label: fullKey, present: 0, absent: 0 };
+    }
+
+    if (status === ATTENDANCE_STATUS.PRESENT) {
+      monthlyTrends[monthKey].present++;
+    } else {
+      monthlyTrends[monthKey].absent++;
+    }
+  });
+
+  // Calculate Most/Least Active Days
+  let mostActiveDay = { name: 'N/A', percentage: 0 };
+  let leastActiveDay = { name: 'N/A', percentage: 100 };
+  let hasValidDayData = false;
+
+  Object.values(dayStats).forEach(day => {
+    const total = day.present + day.absent;
+    if (total > 0) {
+      hasValidDayData = true;
+      const percentage = Math.round((day.present / total) * 100);
+      
+      if (percentage >= mostActiveDay.percentage) {
+         mostActiveDay = { name: day.name, percentage };
+      }
+      if (percentage <= leastActiveDay.percentage) {
+         leastActiveDay = { name: day.name, percentage };
+      }
+    }
+  });
+
+  if (!hasValidDayData) {
+    leastActiveDay = { name: 'N/A', percentage: 0 };
+  }
+
+  // Calculate Most Consistent Month
+  let mostConsistentMonth = { label: 'N/A', percentage: 0 };
+  
+  // Sort Monthly Array chronologically (keys are YYYY-MM)
+  const sortedMonthKeys = Object.keys(monthlyTrends).sort();
+  const monthlyArray = sortedMonthKeys.map(key => {
+     const m = monthlyTrends[key];
+     const total = m.present + m.absent;
+     const percentage = total > 0 ? Math.round((m.present / total) * 100) : 0;
+     
+     if (percentage >= mostConsistentMonth.percentage && total > 0) {
+        mostConsistentMonth = { label: m.label, percentage };
+     }
+     
+     return {
+       label: m.label,
+       present: m.present,
+       absent: m.absent,
+       total,
+       percentage
+     };
+  });
+
+  return {
+    dayStats,
+    mostActiveDay,
+    leastActiveDay,
+    longestRest,
+    monthlyTrends: monthlyArray,
+    mostConsistentMonth
+  };
+};
