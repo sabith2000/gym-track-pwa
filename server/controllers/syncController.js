@@ -1,4 +1,5 @@
 const Attendance = require('../models/Attendance');
+const SyncMeta = require('../models/SyncMeta');
 
 // --- VALIDATION HELPERS ---
 const isValidDate = (dateString) => {
@@ -115,20 +116,27 @@ const handleSync = async (req, res) => {
       );
     }
 
-    // --- 4. FETCH UPDATES FOR CLIENT ---
-    // Return everything the client hasn't seen yet
+    // --- 4. DETECT RESET ---
+    const resetMeta = await SyncMeta.findOne({ key: 'lastResetTimestamp' }).lean();
+    const wasReset =
+      resetMeta && lastSyncTimestamp > 0 && resetMeta.value > lastSyncTimestamp;
+
+    // --- 5. FETCH UPDATES FOR CLIENT ---
+    // If a reset happened, return ALL current records (client will wipe first)
+    // Otherwise, return only what changed since the client's last sync
     const updates = await Attendance.find(
       {
         userId: DEFAULT_USER_ID,
-        updatedAt: { $gt: lastSyncTimestamp },
+        ...(wasReset ? {} : { updatedAt: { $gt: lastSyncTimestamp } }),
       },
-      { _id: 0, __v: 0, userId: 0 } // Exclude internal fields
+      { _id: 0, __v: 0, userId: 0 }
     ).lean();
 
-    // --- 5. RESPOND ---
+    // --- 6. RESPOND ---
     res.status(200).json({
       success: true,
       serverTimestamp: Date.now(),
+      wasReset: !!wasReset,
       updates,
     });
   } catch (error) {
