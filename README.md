@@ -1,6 +1,6 @@
 # Gym-Log 🏋️‍♂️
 
-![Version](https://img.shields.io/badge/version-2.2.1-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.2.3-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-enabled-blueviolet?style=for-the-badge&logo=pwa&logoColor=white)
@@ -113,13 +113,15 @@ The Express server serves the built client from `client/dist` at `http://localho
 
 ---
 
-## 📡 Sync Architecture (v2.1.0)
+## 📡 Sync Architecture (v2.2.3)
 
 Gym-Log uses a **CRDT-lite Last-Write-Wins** strategy for offline sync:
 
-- Every edit carries a timestamp (`updatedAt`) and device fingerprint (`deviceId`)
+- Every edit carries a client timestamp (`updatedAt`) and device fingerprint (`deviceId`)
 - A single `POST /api/attendance/sync` endpoint handles bi-directional data exchange
 - The server uses **atomic MongoDB BulkWrite** operations to enforce LWW at the database level
+- **Dual-Timestamp Design:** `updatedAt` (client-set) resolves conflicts; `serverModifiedAt` (server-set) powers cursor-based sync queries — ensuring offline edits are always visible to other devices
+- **Deterministic Tie-breaker:** If two devices edit at the exact same millisecond, the higher `deviceId` wins on both server and client
 - A **24-hour clock-drift guard** prevents faulty timestamps from corrupting data
 - The client stores data in IndexedDB and queues offline changes for sync on reconnection
 - **Retry with backoff** — failed syncs retry up to 3 times (3s → 9s → 27s)

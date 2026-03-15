@@ -2,6 +2,10 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.2.3] - 2026-03-15
+### Fixed
+- **Sync Optimization:** `serverModifiedAt` now only updates when an incoming change actually wins the LWW comparison, preventing unnecessary re-sends of unchanged records to other devices.
+
 ## [v2.2.2] - 2026-03-15
 ### Fixed
 - **Sync Cursor Bug:** Offline edits with old timestamps were invisible to other devices. Added a server-stamped `serverModifiedAt` field to separate LWW conflict resolution (`updatedAt`) from sync visibility queries.

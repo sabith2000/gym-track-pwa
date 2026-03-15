@@ -84,7 +84,7 @@ gym-track-pwa-antigravity/
 │   ├── index.html
 │   ├── tailwind.config.js
 │   ├── vite.config.js
-│   └── package.json                # Version: 2.2.1
+│   └── package.json                # Version: 2.2.3
 ├── server/
 │   ├── config/db.js                # MongoDB connection
 │   ├── controllers/syncController.js       # CRDT-lite sync endpoint
@@ -119,14 +119,17 @@ gym-track-pwa-antigravity/
 ### 3.3 Database Schema (`Attendance`)
 ```
 {
-  userId:    String (default: "default_user"),
-  date:      String (YYYY-MM-DD, regex-validated),
-  status:    String (enum: PRESENT | ABSENT),
-  updatedAt: Number (epoch ms — LWW timestamp),
-  deviceId:  String (UUID of the editing device)
+  userId:           String (default: "default_user"),
+  date:             String (YYYY-MM-DD, regex-validated),
+  status:           String (enum: PRESENT | ABSENT),
+  updatedAt:        Number (epoch ms — client LWW timestamp, used for conflict resolution),
+  deviceId:         String (UUID of the editing device),
+  serverModifiedAt: Number (epoch ms — server-stamped at write time, used for sync cursor queries)
 }
 Unique compound index: { userId: 1, date: 1 }
 ```
+
+> **Dual-Timestamp Design:** `updatedAt` is set by the client at edit time and used ONLY for LWW conflict resolution. `serverModifiedAt` is set by the server when a record is written and used ONLY for cursor-based sync queries. This separation ensures offline edits (which carry old `updatedAt` values) are always visible to other devices via their `serverModifiedAt`.
 
 ### 3.4 Client Data Flow
 ```
@@ -185,14 +188,15 @@ Unique compound index: { userId: 1, date: 1 }
     └─────────────────────┘
 ```
 
-**How a "Mark Present" click flows (v2.0.0):**
+**How a "Mark Present" click flows (v2.2.3):**
 1. User taps "Present" → `markAttendance('PRESENT')` in `useAttendance`
 2. A change record is built: `{ date, status, updatedAt: Date.now(), deviceId }`
 3. **Optimistic update:** Record is merged into the IDB records store, and the React `history` state is updated immediately
 4. The change is pushed to the IDB sync queue
 5. `triggerSync()` is called — if online, a `POST /sync` round-trip happens immediately
-6. **If online:** Server applies LWW merge (atomic BulkWrite), returns any missed updates. Toast: "Marked as PRESENT!"
+6. **If online:** Server applies LWW merge (atomic BulkWrite with `deviceId` tie-breaker), stamps `serverModifiedAt`, returns any missed updates. Toast: "Marked as PRESENT!"
 7. **If offline:** Queue holds the change. On next online/visibility trigger, the sync loop picks it up
+8. **Other devices** pick up the change on their next sync via `serverModifiedAt > lastSyncTimestamp` query
 
 ### 3.5 State Management
 - **No global state library.** All state lives in React hooks, passed down via props.
@@ -200,7 +204,7 @@ Unique compound index: { userId: 1, date: 1 }
 - The `history` object (shape: `{ "YYYY-MM-DD": "PRESENT" | "ABSENT" }`) is the central data structure, owned by `useAttendance`. Internally, `syncManager.js` stores richer records (`{ status, updatedAt, deviceId }`) but converts them to the simple status map for the UI.
 
 ### 3.6 Version Management
-- The canonical version number lives in `client/package.json` → `version` field (currently `2.2.1`).
+- The canonical version number lives in `client/package.json` → `version` field (currently `2.2.3`).
 - The `Footer` and `SettingsModal` read `pkg.version` to display it.
 - The `Dashboard` compares `pkg.version` against `localStorage('appVersion')` to trigger the changelog modal on updates.
 - `CHANGELOG.md` tracks high-level version history.
@@ -211,9 +215,9 @@ Unique compound index: { userId: 1, date: 1 }
 ## 4. Current Development State
 
 ### Stable & Working
-All features listed in Section 1 are functional in the current codebase. The v2.0.0 CRDT-lite sync engine has been implemented and replaces the previous sync system.
+All features listed in Section 1 are functional in the current codebase. The v2.2.3 CRDT-lite sync engine is fully operational with dual-timestamp architecture and deterministic conflict resolution.
 
-### ✅ Rebuilt: Offline Sync Engine (v2.0.0)
+### ✅ Rebuilt: Offline Sync Engine (v2.0.0 → v2.2.3)
 > The offline sync engine was previously rolled back due to instability. It has now been **rebuilt from scratch** using a CRDT-lite (Last-Write-Wins) architecture:
 > - Single bi-directional `POST /sync` endpoint replaces old GET/POST routes.
 > - Every record carries `updatedAt` (epoch ms) and `deviceId` for conflict resolution.
@@ -225,11 +229,13 @@ All features listed in Section 1 are functional in the current codebase. The v2.
 > - **v2.1.2:** Hardened sync reset detection to handle manual (direct-to-DB) collection deletion.
 > - **v2.2.0:** Fixed duplicate sync state in SettingsModal causing stale exports; added IST timestamps and UI overhaul to exported Excel reports.
 > - **v2.2.1:** Advanced Analytics overhaul in Excel Export (Most Active Day, Monthly Trends, Core KPIs).
+> - **v2.2.2:** Added `serverModifiedAt` (dual-timestamp) to fix offline edits being invisible to other devices. Added `deviceId` tie-breaker for deterministic conflict resolution.
+> - **v2.2.3:** Optimized `serverModifiedAt` stamping — only updates when the incoming change wins the LWW comparison.
 
 ### Known Technical Notes
 - The PIN for Edit Mode is hardcoded to `0000` (see `PinModal.jsx` line 31).
 - `App.css` still contains the default Vite boilerplate styles (logo spin animation, etc.) — it's unused but harmless.
-- `server/package.json` version is `1.0.0` and is not kept in sync with the client version. The client version (`2.2.1`) is the authoritative app version.
+- `server/package.json` version is `1.0.0` and is not kept in sync with the client version. The client version (`2.2.3`) is the authoritative app version.
 - There is no user authentication. The app is single-user by design (`userId` defaults to `"default_user"`).
 - The `userId` field in the schema is a forward-looking design for future multi-user support.
 

@@ -124,9 +124,26 @@ const handleSync = async (req, res) => {
                     '$deviceId',
                   ],
                 },
-                // Server-stamped: ALWAYS update when the record is touched
+                // Server-stamped: only update when the incoming change WINS
                 // This is the cursor field — ensures delayed offline edits are visible
-                serverModifiedAt: serverNow,
+                serverModifiedAt: {
+                  $cond: [
+                    {
+                      $or: [
+                        { $eq: [{ $ifNull: ['$updatedAt', 0] }, 0] },
+                        { $lt: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                        {
+                          $and: [
+                            { $eq: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                            { $lt: [{ $ifNull: ['$deviceId', ''] }, change.deviceId || deviceId] },
+                          ],
+                        },
+                      ],
+                    },
+                    serverNow,
+                    { $ifNull: ['$serverModifiedAt', 0] },
+                  ],
+                },
               },
             },
           ],

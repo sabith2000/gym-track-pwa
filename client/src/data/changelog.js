@@ -1,5 +1,13 @@
 export const changelogData = [
   {
+    version: "2.2.3",
+    date: "2026-03-15",
+    title: "Sync Engine Polish ⚡",
+    changes: [
+      "⚡ Optimized: Server only stamps sync timestamps when data actually changes, reducing unnecessary traffic between devices."
+    ]
+  },
+  {
     version: "2.2.2",
     date: "2026-03-15",
     title: "Sync Reliability Fix 🔧",
