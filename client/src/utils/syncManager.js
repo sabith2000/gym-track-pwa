@@ -88,12 +88,21 @@ export const getStatusMap = (records) => {
   return map;
 };
 
-// Merge server updates into local records (LWW — only overwrite if newer)
+// Merge server updates into local records (LWW + deviceId tie-breaker)
 export const mergeServerUpdates = (localRecords, serverUpdates) => {
   const merged = { ...localRecords };
   for (const update of serverUpdates) {
     const existing = merged[update.date];
-    if (!existing || update.updatedAt > existing.updatedAt) {
+    const existingTs = existing?.updatedAt || 0;
+    const incomingTs = update.updatedAt || 0;
+
+    // Accept if: no local record, incoming is newer, or tie-break by deviceId
+    const shouldAccept =
+      !existing ||
+      incomingTs > existingTs ||
+      (incomingTs === existingTs && (update.deviceId || '') > (existing.deviceId || ''));
+
+    if (shouldAccept) {
       merged[update.date] = {
         status: update.status,
         updatedAt: update.updatedAt,

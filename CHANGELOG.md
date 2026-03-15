@@ -2,6 +2,11 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.2.2] - 2026-03-15
+### Fixed
+- **Sync Cursor Bug:** Offline edits with old timestamps were invisible to other devices. Added a server-stamped `serverModifiedAt` field to separate LWW conflict resolution (`updatedAt`) from sync visibility queries.
+- **Tie-breaker:** When two devices edit the same day at the exact same millisecond, the higher `deviceId` now wins deterministically on both server and client, preventing split-brain divergence.
+
 ## [v2.2.1] - 2026-03-15
 ### Added
 - **Advanced Excel Analytics:** The exported Excel Dashboard sheet now includes three comprehensive tables: Core Metrics, Advanced Analytics, and Monthly Trends.

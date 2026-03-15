@@ -1,5 +1,14 @@
 export const changelogData = [
   {
+    version: "2.2.2",
+    date: "2026-03-15",
+    title: "Sync Reliability Fix 🔧",
+    changes: [
+      "🛡️ Fixed: Offline edits now always appear on all devices after syncing.",
+      "🤝 Tie-breaker: If two devices edit at the same instant, a deterministic rule now picks the winner consistently."
+    ]
+  },
+  {
     version: "2.2.1",
     date: "2026-03-15",
     title: "Advanced Excel Analytics 📈",

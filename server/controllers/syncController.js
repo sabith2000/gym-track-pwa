@@ -66,25 +66,40 @@ const handleSync = async (req, res) => {
               $set: {
                 userId: DEFAULT_USER_ID,
                 date: change.date,
-                // Only apply new status if incoming is newer (or record doesn't exist)
+                // LWW condition: incoming wins if:
+                //   1. Record is new ($updatedAt doesn't exist)
+                //   2. Incoming timestamp is strictly newer
+                //   3. Timestamps tie → higher deviceId wins (deterministic tie-breaker)
                 status: {
                   $cond: [
                     {
                       $or: [
-                        { $not: ['$updatedAt'] }, // Record doesn't exist yet
-                        { $lt: ['$updatedAt', change.updatedAt] }, // Incoming is newer
+                        { $eq: [{ $ifNull: ['$updatedAt', 0] }, 0] },
+                        { $lt: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                        {
+                          $and: [
+                            { $eq: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                            { $lt: [{ $ifNull: ['$deviceId', ''] }, change.deviceId || deviceId] },
+                          ],
+                        },
                       ],
                     },
                     change.status,
-                    '$status', // Keep existing
+                    '$status',
                   ],
                 },
                 updatedAt: {
                   $cond: [
                     {
                       $or: [
-                        { $not: ['$updatedAt'] },
-                        { $lt: ['$updatedAt', change.updatedAt] },
+                        { $eq: [{ $ifNull: ['$updatedAt', 0] }, 0] },
+                        { $lt: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                        {
+                          $and: [
+                            { $eq: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                            { $lt: [{ $ifNull: ['$deviceId', ''] }, change.deviceId || deviceId] },
+                          ],
+                        },
                       ],
                     },
                     change.updatedAt,
@@ -95,14 +110,23 @@ const handleSync = async (req, res) => {
                   $cond: [
                     {
                       $or: [
-                        { $not: ['$updatedAt'] },
-                        { $lt: ['$updatedAt', change.updatedAt] },
+                        { $eq: [{ $ifNull: ['$updatedAt', 0] }, 0] },
+                        { $lt: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                        {
+                          $and: [
+                            { $eq: [{ $ifNull: ['$updatedAt', 0] }, change.updatedAt] },
+                            { $lt: [{ $ifNull: ['$deviceId', ''] }, change.deviceId || deviceId] },
+                          ],
+                        },
                       ],
                     },
                     change.deviceId || deviceId,
                     '$deviceId',
                   ],
                 },
+                // Server-stamped: ALWAYS update when the record is touched
+                // This is the cursor field — ensures delayed offline edits are visible
+                serverModifiedAt: serverNow,
               },
             },
           ],
@@ -128,14 +152,14 @@ const handleSync = async (req, res) => {
     }
 
     // --- 5. FETCH UPDATES FOR CLIENT ---
-    // If a reset happened, return ALL current records (client will wipe first)
-    // Otherwise, return only what changed since the client's last sync
+    // Use serverModifiedAt for the cursor query (not updatedAt!)
+    // This ensures delayed offline edits are always picked up by other devices
     const updates = await Attendance.find(
       {
         userId: DEFAULT_USER_ID,
-        ...(wasReset ? {} : { updatedAt: { $gt: lastSyncTimestamp } }),
+        ...(wasReset ? {} : { serverModifiedAt: { $gt: lastSyncTimestamp } }),
       },
-      { _id: 0, __v: 0, userId: 0 }
+      { _id: 0, __v: 0, userId: 0, serverModifiedAt: 0 }
     ).lean();
 
     // --- 6. RESPOND ---

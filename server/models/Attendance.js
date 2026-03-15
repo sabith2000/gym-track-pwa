@@ -39,6 +39,13 @@ const attendanceSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+
+  // Server-stamped timestamp — set by the server during BulkWrite
+  // Used ONLY for sync cursor queries (not for LWW conflict resolution)
+  serverModifiedAt: {
+    type: Number,
+    default: 0,
+  },
 });
 
 // 🛡️ Compound unique index — guarantees one record per user per day
