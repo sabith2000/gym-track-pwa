@@ -50,12 +50,13 @@ export const calculateStats = (history, viewDate = new Date()) => {
 
   // Calculate Consistency (Percentage)
   const totalPercentage = totalDays > 0 ? Math.round((totalPresent / totalDays) * 100) : 0;
+  const totalAbsent = totalDays - totalPresent;
   
   const monthLogged = monthPresent + monthAbsent;
   const monthPercentage = monthLogged > 0 ? Math.round((monthPresent / monthLogged) * 100) : 0;
 
   return {
-    total: { present: totalPresent, percentage: totalPercentage },
+    total: { present: totalPresent, absent: totalAbsent, percentage: totalPercentage },
     month: { present: monthPresent, absent: monthAbsent, percentage: monthPercentage }
   };
 };

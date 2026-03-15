@@ -177,7 +177,7 @@ export const generateExcelReport = async () => {
     // Set Column Widths for Summary
     summarySheet.getColumn('B').width = 22;
     summarySheet.getColumn('C').width = 15;
-    summarySheet.getColumn('D').width = 5; // Spacing
+    summarySheet.getColumn('D').width = 15; // Spacing for upper, data for lower
     summarySheet.getColumn('E').width = 25;
     summarySheet.getColumn('F').width = 20;
 
