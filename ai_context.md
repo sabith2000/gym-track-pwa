@@ -84,7 +84,7 @@ gym-track-pwa-antigravity/
 │   ├── index.html
 │   ├── tailwind.config.js
 │   ├── vite.config.js
-│   └── package.json                # Version: 2.1.1
+│   └── package.json                # Version: 2.1.2
 ├── server/
 │   ├── config/db.js                # MongoDB connection
 │   ├── controllers/syncController.js       # CRDT-lite sync endpoint
@@ -200,7 +200,7 @@ Unique compound index: { userId: 1, date: 1 }
 - The `history` object (shape: `{ "YYYY-MM-DD": "PRESENT" | "ABSENT" }`) is the central data structure, owned by `useAttendance`. Internally, `syncManager.js` stores richer records (`{ status, updatedAt, deviceId }`) but converts them to the simple status map for the UI.
 
 ### 3.6 Version Management
-- The canonical version number lives in `client/package.json` → `version` field (currently `2.1.1`).
+- The canonical version number lives in `client/package.json` → `version` field (currently `2.1.2`).
 - The `Footer` and `SettingsModal` read `pkg.version` to display it.
 - The `Dashboard` compares `pkg.version` against `localStorage('appVersion')` to trigger the changelog modal on updates.
 - `CHANGELOG.md` tracks high-level version history.
@@ -222,11 +222,12 @@ All features listed in Section 1 are functional in the current codebase. The v2.
 > - A 24-hour clock-drift guard prevents future timestamps from corrupting data.
 > - **v2.1.0:** Cross-device reset sync (via `SyncMeta` model), retry with exponential backoff (3x at 3s/9s/27s), `NetworkOnly` Workbox strategy for API routes, persistent update banner.
 > - **v2.1.1:** Fixed `useSyncEngine` race condition dropping rapid edits in Edit Mode.
+> - **v2.1.2:** Hardened sync reset detection to handle manual (direct-to-DB) collection deletion.
 
 ### Known Technical Notes
 - The PIN for Edit Mode is hardcoded to `0000` (see `PinModal.jsx` line 31).
 - `App.css` still contains the default Vite boilerplate styles (logo spin animation, etc.) — it's unused but harmless.
-- `server/package.json` version is `1.0.0` and is not kept in sync with the client version. The client version (`2.1.1`) is the authoritative app version.
+- `server/package.json` version is `1.0.0` and is not kept in sync with the client version. The client version (`2.1.2`) is the authoritative app version.
 - There is no user authentication. The app is single-user by design (`userId` defaults to `"default_user"`).
 - The `userId` field in the schema is a forward-looking design for future multi-user support.
 

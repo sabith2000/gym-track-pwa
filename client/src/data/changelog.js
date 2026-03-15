@@ -1,5 +1,13 @@
 export const changelogData = [
   {
+    version: "2.1.2",
+    date: "2026-03-15",
+    title: "Database Reset Hardening 🛡️",
+    changes: [
+      "🐛 Fixed an edge case so that manual database deletions correctly force clients to reset their local data during the next sync."
+    ]
+  },
+  {
     version: "2.1.1",
     date: "2026-03-15",
     title: "Edit Mode Sync Fix ⚡",

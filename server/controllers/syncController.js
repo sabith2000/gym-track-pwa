@@ -117,9 +117,15 @@ const handleSync = async (req, res) => {
     }
 
     // --- 4. DETECT RESET ---
+    const totalRecordsCount = await Attendance.countDocuments({ userId: DEFAULT_USER_ID });
     const resetMeta = await SyncMeta.findOne({ key: 'lastResetTimestamp' }).lean();
-    const wasReset =
-      resetMeta && lastSyncTimestamp > 0 && resetMeta.value > lastSyncTimestamp;
+    
+    let wasReset = false;
+    if (resetMeta && lastSyncTimestamp > 0 && resetMeta.value > lastSyncTimestamp) {
+      wasReset = true; // Clean reset via app API
+    } else if (lastSyncTimestamp > 0 && totalRecordsCount === 0) {
+      wasReset = true; // Hard reset via direct DB deletion
+    }
 
     // --- 5. FETCH UPDATES FOR CLIENT ---
     // If a reset happened, return ALL current records (client will wipe first)

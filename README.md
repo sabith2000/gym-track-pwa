@@ -1,6 +1,6 @@
 # Gym-Log 🏋️‍♂️
 
-![Version](https://img.shields.io/badge/version-2.1.1-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.1.2-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-enabled-blueviolet?style=for-the-badge&logo=pwa&logoColor=white)

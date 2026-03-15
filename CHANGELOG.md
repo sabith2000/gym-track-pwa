@@ -2,6 +2,10 @@
 
 All notable changes to the "GymTrack" project will be documented in this file.
 
+## [v2.1.2] - 2026-03-15
+### Fixed
+- **Hard Database Wipe Sync:** Handled an edge case where manually deleting all records directly from the database (bypassing the app UI) prevented clients from resetting. The server now cross-references the client's historical sync timestamp against the total server record count to deduce manual wipes.
+
 ## [v2.1.1] - 2026-03-15
 ### Fixed
 - **Edit Mode Sync Drop:** Fixed a race condition in `useSyncEngine` where rapid sequential edits (e.g., tapping 3 past days quickly in Edit Mode) were dropped by the local sync queue. The engine now detects overlapping sync requests and schedules an automatic follow-up sync to completely drain the queue.
